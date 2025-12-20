@@ -18,60 +18,37 @@ export function BottomNav({ currentMode, onModeChange }: BottomNavProps) {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-bg-secondary border-t border-text/10 px-4 py-2 z-50">
+    <nav className="fixed bottom-0 left-0 right-0 wood-bg border-t-4 border-[#5D4037] px-4 py-3 z-50">
       <div className="flex justify-around items-center max-w-md mx-auto">
-        {navItems.map((item, index) => {
+        {navItems.map((item) => {
           const isActive = currentMode === item.mode;
           const Icon = item.icon;
           
           return (
             <motion.button
               key={item.mode}
-              whileTap={{ scale: 0.9 }}
-              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.95, y: 2 }}
+              whileHover={{ scale: 1.05 }}
               onClick={() => onModeChange(item.mode)}
-              className={`relative flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-colors ${
+              className={`relative flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all ${
                 isActive 
-                  ? 'text-primary' 
-                  : 'text-text-muted hover:text-text-secondary'
+                  ? 'bg-white border-4 border-[#5D4037] border-b-8' 
+                  : 'text-white/70 hover:text-white'
               }`}
             >
-              {/* 激活状态背景 */}
-              <AnimatePresence>
-                {isActive && (
-                  <motion.div
-                    layoutId="navBackground"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                    className="absolute inset-0 bg-primary/10 rounded-2xl"
-                  />
-                )}
-              </AnimatePresence>
+              {/* 图标 */}
+              <Icon 
+                className={`w-6 h-6 relative z-10 ${
+                  isActive ? 'text-[#5D4037]' : 'text-white drop-shadow-md'
+                }`} 
+                strokeWidth={2.5}
+              />
               
-              {/* 图标 - 激活时弹跳 */}
-              <motion.div
-                animate={isActive ? { y: [0, -3, 0] } : {}}
-                transition={{ duration: 0.3 }}
-              >
-                <Icon className={`w-6 h-6 relative z-10 ${isActive ? 'text-primary' : ''}`} />
-              </motion.div>
-              
-              <span className={`text-xs font-bold relative z-10 ${isActive ? 'text-primary' : ''}`}>
+              <span className={`text-xs font-black relative z-10 ${
+                isActive ? 'text-[#5D4037]' : 'text-white drop-shadow-md'
+              }`}>
                 {item.label}
               </span>
-              
-              {/* 底部指示点 */}
-              {isActive && (
-                <motion.div
-                  layoutId="activeIndicator"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                  className="absolute -bottom-0.5 w-1.5 h-1.5 bg-primary rounded-full"
-                />
-              )}
             </motion.button>
           );
         })}

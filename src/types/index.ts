@@ -1,3 +1,12 @@
+// 单词含义
+export interface WordMeaning {
+  pos: string; // 词性 (n. v. adj. etc.)
+  definition: string; // 英文释义
+  definitionCn: string; // 中文释义
+  example?: string; // 例句
+  exampleCn?: string; // 例句翻译
+}
+
 // 单词数据类型
 export interface Word {
   id: string;
@@ -6,8 +15,9 @@ export interface Word {
   hint: string; // 中文提示词
   hintEn?: string; // 英文提示词
   category: string;
-  difficulty: 1 | 2 | 3;
+  difficulty: 1 | 2 | 3; // 1=普通(1💎), 2=中等(2💎), 3=稀有(5💎)
   pronunciation?: string; // 音标
+  meanings?: WordMeaning[]; // 多种含义
 }
 
 // 游戏模式

@@ -35,6 +35,9 @@ const initialState: GameState = {
 // 清除数据开关：1=清除旧数据，0=正常加载
 const CLEAR_DATA_FLAG: number = 0;        //CLEAR_DATA_FLAG = 1 → 清除所有旧数据 CLEAR_DATA_FLAG = 0 → 正常加载数据（当前状态）
 
+// 抠图开关：0=不抠图使用原图，1=调用AI抠图
+export const REMOVE_BG_FLAG: number = 1;  //REMOVE_BG_FLAG = 0 → 使用原图 REMOVE_BG_FLAG = 1 → 进行AI抠图
+
 
 // 从本地存储加载用户数据
 function loadUserData(): UserData {
@@ -79,16 +82,20 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         showHint: false,
       };
 
-    case 'SET_WORD':
+    case 'SET_WORD': {
+      // 从 userData.wordRecords 中加载该单词已收集的图片
+      const wordRecord = state.userData.wordRecords[action.payload.id];
+      const existingImages = wordRecord?.images || [];
       return {
         ...state,
         currentWord: action.payload,
-        collectedImages: [],
+        collectedImages: existingImages,
         phase: 'IDLE',
         lastResult: null,
         capturedImageUrl: null,
         showHint: false,
       };
+    }
 
     case 'START_CAMERA':
       return {
@@ -244,16 +251,20 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         error: null,
       };
 
-    case 'NEXT_WORD':
+    case 'NEXT_WORD': {
+      // 从 userData.wordRecords 中加载该单词已收集的图片
+      const wordRecord = state.userData.wordRecords[action.payload.id];
+      const existingImages = wordRecord?.images || [];
       return {
         ...state,
         currentWord: action.payload,
-        collectedImages: [],
+        collectedImages: existingImages,
         phase: 'IDLE',
         lastResult: null,
         capturedImageUrl: null,
         showHint: false,
       };
+    }
 
     case 'SET_ERROR':
       return {

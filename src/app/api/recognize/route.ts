@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// 豆包视觉模型 API 配置
+// 豆包视觉模型 API 配置 - Doubao-Seed-1.6-lite
 const DOUBAO_API_URL = 'https://ark.cn-beijing.volces.com/api/v3/chat/completions';
+// 推理接入点
+const DOUBAO_ENDPOINT_ID = 'ep-20251105144941-hxmgb';
+// 模型名称
+const DOUBAO_MODEL_NAME = 'doubao-seed-1-6-lite-251015';
 
 interface RecognizeRequest {
   imageBase64: string;
@@ -28,9 +32,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 获取豆包 API Key 和模型
-    const apiKey = process.env.DOUBAO_API_KEY;
-    const modelId = process.env.DOUBAO_MODEL_ID || 'doubao-seed-1-6-flash-250828';
+    // 获取豆包 API Key（优先使用环境变量，否则使用硬编码的key）
+    const apiKey = process.env.DOUBAO_API_KEY || 'f1df8cb2-c16c-4b6b-a673-c919175a10fb';
+    const modelId = process.env.DOUBAO_MODEL_ID || DOUBAO_MODEL_NAME;
+
+    console.log('🤖 豆包AI识别中...');
 
     if (!apiKey) {
       // 开发模式：模拟 AI 响应
@@ -61,7 +67,7 @@ JSON 结构:
     // 移除 base64 前缀
     const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
 
-    // 调用豆包 API
+    // 调用豆包 API - 使用 Doubao-Seed-1.6-lite 模型
     const response = await fetch(DOUBAO_API_URL, {
       method: 'POST',
       headers: {
@@ -70,25 +76,25 @@ JSON 结构:
       },
       body: JSON.stringify({
         model: modelId,
+        max_completion_tokens: 1000,
+        reasoning_effort: 'low',
         messages: [
           {
             role: 'user',
             content: [
-              {
-                type: 'text',
-                text: systemPrompt,
-              },
               {
                 type: 'image_url',
                 image_url: {
                   url: `data:image/jpeg;base64,${base64Data}`,
                 },
               },
+              {
+                type: 'text',
+                text: systemPrompt,
+              },
             ],
           },
         ],
-        max_tokens: 500,
-        temperature: 0.3,
       }),
     });
 

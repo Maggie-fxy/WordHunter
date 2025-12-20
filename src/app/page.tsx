@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RefreshCw, Lightbulb, Volume2, VolumeX, Music, Mic } from 'lucide-react';
-import { useGame } from '@/context/GameContext';
+import { useGame, REMOVE_BG_FLAG } from '@/context/GameContext';
 import { CollectionGrid } from '@/components/CollectionGrid';
 import { CameraView } from '@/components/CameraView';
 import { VictoryModal } from '@/components/VictoryModal';
@@ -41,7 +41,6 @@ export default function HomePage() {
   const [hintButtonFlashing, setHintButtonFlashing] = useState<1 | 2 | false>(false); // 提示按钮闪烁: 1=引导第一次, 2=引导第二次
   const [isCardSwitching, setIsCardSwitching] = useState(false); // 换词动画状态
   const [countdown, setCountdown] = useState(60); // 60秒倒计时
-  const [isPaused, setIsPaused] = useState(false); // 拍照时暂停倒计时
   const [newImageUrl, setNewImageUrl] = useState<string | null>(null); // 新收集的图片URL（用于动画）
   const [showImageAnimation, setShowImageAnimation] = useState(false); // 显示图片飞入动画
   const [unlockedAchievement, setUnlockedAchievement] = useState<typeof ACHIEVEMENTS[0] | null>(null); // 新解锁的成就
@@ -123,29 +122,6 @@ export default function HomePage() {
       setHintLevel(0);
       setHintButtonFlashing(false);
       setCountdown(60);
-      setIsPaused(false);
-      
-      // 重新启动倒计时
-      if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
-      countdownTimerRef.current = setInterval(() => {
-        setCountdown(prev => {
-          if (prev <= 1) {
-            handleSwitchWord();
-            return 60;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-      
-      // 重新启动提示引导
-      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-      if (idleTimer2Ref.current) clearTimeout(idleTimer2Ref.current);
-      idleTimerRef.current = setTimeout(() => {
-        setHintButtonFlashing(1);
-      }, 10000);
-      idleTimer2Ref.current = setTimeout(() => {
-        setHintButtonFlashing(2);
-      }, 20000);
       
       setTimeout(() => {
         setIsCardSwitching(false);
@@ -153,10 +129,10 @@ export default function HomePage() {
     }, 300);
   }, [nextWord]);
 
-  // 识别成功后自动跳转下一个单词 - 停留2秒让用户看到图片在框里
+  // 识别成功后自动跳转下一个单词 - 停留4秒让用户看到图片在框里
   useEffect(() => {
     if (phase === 'SUCCESS' && mode === 'HUNTER') {
-      // 2秒后自动跳转到下一个单词
+      // 4秒后自动跳转到下一个单词
       const timer = setTimeout(() => {
         // 直接调用换词逻辑，避免循环依赖
         setIsCardSwitching(true);
@@ -165,129 +141,76 @@ export default function HomePage() {
           setHintLevel(0);
           setHintButtonFlashing(false);
           setCountdown(60);
-          setIsPaused(false);
-          
-          // 重新启动倒计时
-          if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
-          countdownTimerRef.current = setInterval(() => {
-            setCountdown(prev => {
-              if (prev <= 1) {
-                return 60;
-              }
-              return prev - 1;
-            });
-          }, 1000);
           
           setTimeout(() => {
             setIsCardSwitching(false);
           }, 300);
         }, 300);
-      }, 2000);
+      }, 4000);
       return () => clearTimeout(timer);
     }
   }, [phase, nextWord, mode]);
 
-  // 重置提示和计时器 - 必须在条件返回之前定义
-  const resetHintAndTimer = useCallback(() => {
-    setHintLevel(0);
-    setHintButtonFlashing(false);
-    setCountdown(60);
-    setIsPaused(false);
-    
-    // 清除旧计时器
-    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-    if (idleTimer2Ref.current) clearTimeout(idleTimer2Ref.current);
-    if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
-    
-    // 10秒后开始闪烁提示按钮（引导第一次英文提示）
-    idleTimerRef.current = setTimeout(() => {
-      setHintButtonFlashing(1);
-    }, 10000);
-    
-    // 20秒后引导第二次提示（中文）
-    idleTimer2Ref.current = setTimeout(() => {
-      setHintButtonFlashing(prev => prev === 1 ? 1 : 2); // 如果还没点第一次，保持闪烁
-    }, 20000);
-    
-    // 开始60秒倒计时
-    countdownTimerRef.current = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          // 倒计时结束，自动换词
-          handleSwitchWord();
-          return 60;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  }, [handleSwitchWord]);
-
-  // 当单词改变时重置计时器 - 只在单词ID变化时重置，切换模式不重置
+  // 统一的倒计时管理 - 解决竞态条件
   useEffect(() => {
-    if (currentWord && mode === 'HUNTER' && countdown === 60) {
-      // 只有倒计时为60（初始状态）时才重置
-      resetHintAndTimer();
+    // 清除旧的计时器
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current);
+      countdownTimerRef.current = null;
     }
-    return () => {
-      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-      if (idleTimer2Ref.current) clearTimeout(idleTimer2Ref.current);
-      if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
-    };
-  }, [currentWord?.id]);
-  
-  // 切换回HUNTER模式时恢复倒计时（不重置）
-  useEffect(() => {
-    if (mode === 'HUNTER' && !countdownTimerRef.current && countdown < 60 && countdown > 0) {
-      // 恢复倒计时
+
+    // 判断是否应该运行倒计时
+    const isCameraActive = phase === 'CAMERA' || phase === 'ANALYZING' || phase === 'FAILED' || phase === 'SUCCESS';
+    const shouldRun = mode === 'HUNTER' && !isCameraActive && currentWord;
+
+    if (shouldRun) {
       countdownTimerRef.current = setInterval(() => {
         setCountdown(prev => {
           if (prev <= 1) {
+            // 倒计时结束，触发换词
             handleSwitchWord();
             return 60;
           }
           return prev - 1;
         });
       }, 1000);
-    } else if (mode !== 'HUNTER' && countdownTimerRef.current) {
-      // 切换到其他模式时暂停倒计时
-      clearInterval(countdownTimerRef.current);
-      countdownTimerRef.current = null;
     }
-  }, [mode, handleSwitchWord]);
 
-  // 拍照时暂停/恢复倒计时
-  useEffect(() => {
-    const isCameraActive = phase === 'CAMERA' || phase === 'ANALYZING' || phase === 'FAILED' || phase === 'SUCCESS';
-    
-    if (isCameraActive && !isPaused) {
-      // 暂停倒计时
-      setIsPaused(true);
+    return () => {
       if (countdownTimerRef.current) {
         clearInterval(countdownTimerRef.current);
         countdownTimerRef.current = null;
       }
-      if (idleTimerRef.current) {
-        clearTimeout(idleTimerRef.current);
-        idleTimerRef.current = null;
-      }
-      if (idleTimer2Ref.current) {
-        clearTimeout(idleTimer2Ref.current);
-        idleTimer2Ref.current = null;
-      }
-    } else if (!isCameraActive && isPaused && mode === 'HUNTER') {
-      // 恢复倒计时
-      setIsPaused(false);
-      countdownTimerRef.current = setInterval(() => {
-        setCountdown(prev => {
-          if (prev <= 1) {
-            handleSwitchWord();
-            return 60;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+    };
+  }, [mode, phase, currentWord, handleSwitchWord]);
+
+  // 单词改变时重置倒计时和提示
+  useEffect(() => {
+    if (currentWord && mode === 'HUNTER') {
+      setCountdown(60);
+      setHintLevel(0);
+      setHintButtonFlashing(false);
+      
+      // 清除旧的提示计时器
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+      if (idleTimer2Ref.current) clearTimeout(idleTimer2Ref.current);
+      
+      // 10秒后开始闪烁提示按钮
+      idleTimerRef.current = setTimeout(() => {
+        setHintButtonFlashing(1);
+      }, 10000);
+      
+      // 20秒后引导第二次提示
+      idleTimer2Ref.current = setTimeout(() => {
+        setHintButtonFlashing(2);
+      }, 20000);
     }
-  }, [phase, isPaused, mode, handleSwitchWord]);
+    
+    return () => {
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+      if (idleTimer2Ref.current) clearTimeout(idleTimer2Ref.current);
+    };
+  }, [currentWord?.id, mode]);
 
   // 根据模式渲染不同页面
   if (mode === 'REVIEW') {
@@ -355,12 +278,35 @@ export default function HomePage() {
       if (aiResult.is_match) {
         // 播放成功音效
         playSuccess();
-        // 暂时移除抠图，直接用原图
-        setNewImageUrl(imageData);
+        
+        // 根据标志位决定是否抠图
+        let finalImageUrl = imageData;
+        if (REMOVE_BG_FLAG === 1) {
+          try {
+            const removeBgResponse = await fetch('/api/removebg', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ imageBase64: imageData }),
+            });
+            const removeBgResult = await removeBgResponse.json();
+            if (removeBgResult.success && removeBgResult.imageUrl) {
+              finalImageUrl = removeBgResult.imageUrl;
+              console.log('抠图成功，剩余配额:', removeBgResult.remainingCredits);
+            } else {
+              console.log('抠图失败，使用原图:', removeBgResult.error);
+            }
+          } catch (e) {
+            console.log('抠图请求失败，使用原图:', e);
+          }
+        } else {
+          console.log('抠图开关关闭，使用原图');
+        }
+        
+        setNewImageUrl(finalImageUrl);
         setShowImageAnimation(true);
         dispatch({
           type: 'ANALYSIS_SUCCESS',
-          payload: { result: aiResult, imageUrl: imageData },
+          payload: { result: aiResult, imageUrl: finalImageUrl },
         });
         // 2秒后隐藏动画和重置锁
         setTimeout(() => {
@@ -390,10 +336,33 @@ export default function HomePage() {
     isProcessingRef.current = true;
     
     dispatch({ type: 'START_ANALYZING' });
-    // 暂时移除抠图，直接用原图
-    setNewImageUrl(imageData);
+    
+    // 根据标志位决定是否抠图
+    let finalImageUrl = imageData;
+    if (REMOVE_BG_FLAG === 1) {
+      try {
+        const removeBgResponse = await fetch('/api/removebg', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageBase64: imageData }),
+        });
+        const removeBgResult = await removeBgResponse.json();
+        if (removeBgResult.success && removeBgResult.imageUrl) {
+          finalImageUrl = removeBgResult.imageUrl;
+          console.log('抠图成功，剩余配额:', removeBgResult.remainingCredits);
+        } else {
+          console.log('抠图失败，使用原图:', removeBgResult.error);
+        }
+      } catch (e) {
+        console.log('抠图请求失败，使用原图:', e);
+      }
+    } else {
+      console.log('抠图开关关闭，使用原图');
+    }
+    
+    setNewImageUrl(finalImageUrl);
     setShowImageAnimation(true);
-    dispatch({ type: 'FORCE_SUCCESS', payload: imageData });
+    dispatch({ type: 'FORCE_SUCCESS', payload: finalImageUrl });
     // 2秒后隐藏动画和重置锁
     setTimeout(() => {
       setShowImageAnimation(false);
@@ -438,42 +407,19 @@ export default function HomePage() {
   // SUCCESS 状态时不显示相机，显示收集栏让用户看到图片已添加
   const isCameraActive = phase === 'CAMERA' || phase === 'ANALYZING' || phase === 'FAILED';
 
-  // 开始相机 - 暂停倒计时
+  // 开始相机
   const handleStartCamera = () => {
     playClick();
-    // 暂停倒计时
-    if (countdownTimerRef.current) {
-      clearInterval(countdownTimerRef.current);
-      countdownTimerRef.current = null;
-    }
-    setIsPaused(true);
     dispatch({ type: 'START_CAMERA' });
   };
 
-  // 停止相机 - 恢复倒计时
+  // 停止相机
   const handleStopCamera = () => {
     dispatch({ type: 'STOP_CAMERA' });
-    // 恢复倒计时
-    setIsPaused(false);
-    countdownTimerRef.current = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          return 60;
-        }
-        return prev - 1;
-      });
-    }, 1000);
   };
 
-  // 拍照处理 - 确保倒计时暂停直到识别完成
+  // 拍照处理
   const handleCapture = async (imageData: string) => {
-    // 确保倒计时暂停
-    if (countdownTimerRef.current) {
-      clearInterval(countdownTimerRef.current);
-      countdownTimerRef.current = null;
-    }
-    setIsPaused(true);
-    
     dispatch({ type: 'CAPTURE_IMAGE', payload: imageData });
     dispatch({ type: 'START_ANALYZING' });
     await handleAnalyze(imageData);
@@ -481,7 +427,7 @@ export default function HomePage() {
 
   // Hunter Page 布局
   return (
-    <div className="h-screen flex flex-col bg-bg overflow-hidden pb-24">
+    <div className="h-screen flex flex-col grass-bg overflow-hidden pb-24">
       {/* 整体卡片容器 - 带换词动画 */}
       <motion.div
         animate={{
@@ -492,7 +438,7 @@ export default function HomePage() {
         className="flex-1 flex flex-col"
       >
         {/* Top: 单词卡片区域 */}
-        <div className="bg-bg z-10 px-4 pt-4 pb-2">
+        <div className="z-10 px-4 pt-4 pb-2">
           <AnimatePresence mode="wait">
             {currentWord && (
               <motion.div
@@ -500,64 +446,63 @@ export default function HomePage() {
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
-                className="bg-bg-secondary rounded-3xl border border-text/10 shadow-card p-4"
+                className="bg-white rounded-3xl border-4 border-[#5D4037] border-b-[14px] p-4 animate-float"
               >
                 {/* 单词和操作按钮 */}
                 <div className="flex items-center justify-between mb-2">
                   {/* 左侧：背景音乐 + 发音 */}
                   <div className="flex items-center gap-2">
-                    {/* 背景音乐按钮 - 使用Music图标 */}
+                    {/* 背景音乐按钮 */}
                     <motion.button
-                      whileTap={{ scale: 0.9 }}
+                      whileTap={{ scale: 0.95, y: 2 }}
                       onClick={toggleBgm}
-                      className={`p-2 rounded-xl border shadow-soft ${isBgmPlaying ? 'bg-success border-success/30' : 'bg-bg-tertiary border-text/10'}`}
+                      className={`btn-3d p-2 rounded-xl ${isBgmPlaying ? 'bg-[#66BB6A] border-[#2E7D32]' : 'bg-gray-200 border-gray-400'}`}
                       title={isBgmPlaying ? '关闭背景音乐' : '开启背景音乐'}
                     >
-                      <Music className={`w-5 h-5 ${isBgmPlaying ? 'text-text-onPrimary' : 'text-text-muted'}`} />
+                      <Music className={`w-5 h-5 ${isBgmPlaying ? 'text-white drop-shadow-md' : 'text-gray-500'}`} strokeWidth={2.5} />
                     </motion.button>
                     
-                    {/* 发音按钮 - 使用Mic图标 */}
+                    {/* 发音按钮 */}
                     <motion.button
-                      whileTap={{ scale: 0.9 }}
+                      whileTap={{ scale: 0.95, y: 2 }}
                       onClick={handleSpeak}
-                      className="p-2 rounded-xl bg-accent border border-accent/30 shadow-soft"
+                      className="btn-3d p-2 rounded-xl bg-[#4FC3F7] border-[#0288D1]"
                       title="朗读单词"
                     >
-                      <Mic className="w-5 h-5 text-text-onPrimary" />
+                      <Mic className="w-5 h-5 text-white drop-shadow-md" strokeWidth={2.5} />
                     </motion.button>
                   </div>
                   
                   {/* 右侧：提示 + 换词 */}
                   <div className="flex items-center gap-2">
-                    {/* 提示按钮 - 带闪烁和浮动效果 */}
+                    {/* 提示按钮 */}
                     <div className="relative">
                       <motion.button
-                        whileTap={{ scale: 0.9 }}
+                        whileTap={{ scale: 0.95, y: 2 }}
                         onClick={handleUseHint}
                         disabled={hintLevel >= 2}
                         animate={hintButtonFlashing ? { 
                           scale: [1, 1.1, 1],
-                          y: [0, -3, 0],
-                          boxShadow: ['0 0 0 0 rgba(255, 213, 79, 0)', '0 0 0 8px rgba(255, 213, 79, 0.4)', '0 0 0 0 rgba(255, 213, 79, 0)']
+                          rotate: [0, 5, -5, 0],
                         } : {}}
-                        transition={hintButtonFlashing ? { duration: 1.5, repeat: Infinity } : {}}
-                        className={`p-2 rounded-xl border shadow-soft flex items-center gap-1 ${
-                          hintLevel < 2 ? 'bg-secondary border-secondary-border' : 'bg-bg-tertiary border-text/10 opacity-50'
+                        transition={hintButtonFlashing ? { duration: 1, repeat: Infinity } : {}}
+                        className={`btn-3d p-2 rounded-xl ${
+                          hintLevel < 2 ? 'bg-[#FFB74D] border-[#F57C00]' : 'bg-gray-200 border-gray-400 opacity-50'
                         }`}
                         title={hintLevel === 0 ? '查看英文提示' : hintLevel === 1 ? '查看中文提示' : '已显示全部提示'}
                       >
-                        <Lightbulb className="w-5 h-5 text-text" />
+                        <Lightbulb className={`w-5 h-5 ${hintLevel < 2 ? 'text-white drop-shadow-md' : 'text-gray-500'}`} strokeWidth={2.5} />
                       </motion.button>
                     </div>
                     
                     {/* 换词按钮 */}
                     <motion.button
-                      whileTap={{ scale: 0.9 }}
+                      whileTap={{ scale: 0.95, y: 2 }}
                       onClick={handleSwitchWord}
-                      className="p-2 rounded-xl bg-warning border border-warning/30 shadow-soft"
+                      className="btn-3d p-2 rounded-xl bg-[#FF5252] border-[#B71C1C]"
                       title="换一个单词"
                     >
-                      <RefreshCw className="w-5 h-5 text-text" />
+                      <RefreshCw className="w-5 h-5 text-white drop-shadow-md" strokeWidth={2.5} />
                     </motion.button>
                   </div>
                 </div>
@@ -570,30 +515,34 @@ export default function HomePage() {
                 </div>
 
                 {/* 提示显示 - 分级显示：第一次英文，第二次中文 */}
-                <AnimatePresence>
-                  {hintLevel >= 1 && hintLevel < 2 && (
+                <AnimatePresence mode="wait">
+                  {hintLevel === 1 && (
                     <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="mt-3 p-3 bg-secondary-soft rounded-xl border border-dashed border-secondary-border/50"
+                      key="hint-en"
+                      initial={{ opacity: 0, scale: 0.9, y: -10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                      transition={{ duration: 0.2 }}
+                      className="mt-3"
                     >
-                      <p className="text-base font-bold text-text text-center">
-                        💡 {currentWord.hintEn || currentWord.hint}
-                      </p>
+                      <div className="p-3 bg-[#FFF8E1] rounded-2xl border-4 border-[#F57C00] border-b-8">
+                        <p className="text-base font-black text-[#5D4037] text-center">
+                          💡 {currentWord.hintEn || currentWord.hint}
+                        </p>
+                      </div>
                     </motion.div>
                   )}
-                </AnimatePresence>
-                <AnimatePresence>
                   {hintLevel >= 2 && (
                     <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
+                      key="hint-cn"
+                      initial={{ opacity: 0, scale: 0.9, y: -10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                      transition={{ duration: 0.2 }}
                       className="mt-2 text-center"
                     >
-                      <div className="inline-block bg-success/20 px-4 py-2 rounded-full border border-success">
-                        <span className="text-base font-black text-text">{currentWord.cn} - {currentWord.hint}</span>
+                      <div className="inline-block bg-[#C8E6C9] px-4 py-2 rounded-2xl border-4 border-[#2E7D32] border-b-8">
+                        <span className="text-base font-black text-[#1B5E20]">{currentWord.cn} - {currentWord.hint}</span>
                       </div>
                     </motion.div>
                   )}
@@ -607,7 +556,7 @@ export default function HomePage() {
         <div className="flex-1 px-4 py-2 overflow-hidden relative">
           {isCameraActive ? (
             /* 相机视图 */
-            <div className="h-full rounded-3xl overflow-hidden border border-text/10 shadow-card">
+            <div className="h-full rounded-3xl overflow-hidden border-4 border-[#5D4037]">
               <CameraView
                 onCapture={handleCapture}
                 onClose={handleStopCamera}
@@ -618,10 +567,10 @@ export default function HomePage() {
             /* 2x3 卡槽 Grid + 圆形拍照按钮 */
             <div className="h-full flex flex-col">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-bold text-text">
-                  {phase === 'SUCCESS' ? '🎉 收集成功！' : '收集进度'}
+                <h3 className="text-sm font-black text-[#5D4037]">
+                  {phase === 'SUCCESS' ? '🎉 收集成功！' : '📦 收集进度'}
                 </h3>
-                <span className="text-sm font-black text-primary">{collectedImages.length}/6</span>
+                <span className="text-sm font-black text-[#FF5252]">{collectedImages.length}/6</span>
               </div>
               
               {/* 收集框 */}
@@ -629,17 +578,17 @@ export default function HomePage() {
                 <CollectionGrid images={collectedImages} highlightLast={phase === 'SUCCESS'} />
               </div>
               
-              {/* START HUNTING 按钮 - 在收集框下方居中，SUCCESS时隐藏 */}
+              {/* START HUNTING 按钮 - 2.5D风格 */}
               {phase !== 'SUCCESS' && (
                 <div className="flex-1 flex items-center justify-center">
                   <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.05, rotate: 3 }}
+                    whileTap={{ scale: 0.95, y: 10 }}
                     onClick={handleStartCamera}
                     disabled={!currentWord}
-                    className="w-40 h-40 rounded-full bg-primary hover:bg-primary-hover shadow-soft-lg text-text-onPrimary font-black flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-all hunting-button"
+                    className="btn-3d-lg w-40 h-40 rounded-full bg-[#FF5252] border-[#B71C1C] text-white font-black flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <span className="text-xl font-black tracking-wide">START<br/>HUNTING</span>
+                    <span className="text-xl font-black tracking-wide drop-shadow-md">START<br/>HUNTING</span>
                   </motion.button>
                 </div>
               )}
@@ -667,7 +616,7 @@ export default function HomePage() {
         )}
       </AnimatePresence>
 
-      {/* 底部倒计时进度条 - 最后10秒紧迫感动画 */}
+      {/* 底部倒计时进度条 - 左红右绿，丝滑动画 */}
       <div className="fixed bottom-20 left-0 right-0 px-4 z-30">
         <motion.div 
           className="h-4 bg-bg-tertiary rounded-full overflow-hidden"
@@ -677,17 +626,15 @@ export default function HomePage() {
           } : {}}
           transition={countdown <= 10 ? { duration: 0.5, repeat: Infinity } : {}}
         >
-          <motion.div
-            className={`h-full ${
+          <div
+            className={`h-full transition-all duration-1000 ease-linear ${
               countdown <= 10 
-                ? 'bg-gradient-to-r from-primary to-error' 
+                ? 'bg-gradient-to-r from-error to-primary' 
                 : countdown <= 30 
-                  ? 'bg-gradient-to-r from-secondary to-primary'
-                  : 'bg-gradient-to-r from-success via-secondary to-primary'
+                  ? 'bg-gradient-to-r from-primary via-secondary to-success'
+                  : 'bg-gradient-to-r from-primary via-secondary to-success'
             }`}
-            initial={{ width: '100%' }}
-            animate={{ width: `${(countdown / 60) * 100}%` }}
-            transition={{ duration: 0.5 }}
+            style={{ width: `${(countdown / 60) * 100}%` }}
           />
         </motion.div>
         <motion.p 

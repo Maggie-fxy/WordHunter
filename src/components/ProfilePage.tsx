@@ -92,19 +92,19 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
   };
 
   return (
-    <div className="h-screen bg-bg flex flex-col overflow-hidden pb-20">
+    <div className="h-screen grass-bg flex flex-col overflow-hidden pb-20">
       {/* Header */}
-      <header className="px-4 py-6 text-center">
-        <h1 className="text-2xl font-black text-text">My Hunter Pass</h1>
-        <p className="text-text-secondary text-sm mt-1">你的狩猎通行证</p>
+      <header className="px-4 py-6 text-center wood-bg border-b-4 border-[#5D4037]">
+        <h1 className="text-2xl font-black text-white drop-shadow-md">🎫 My Hunter Pass</h1>
+        <p className="text-white/80 text-sm mt-1 font-bold">你的狩猎通行证</p>
       </header>
 
-      {/* License Card - 身份证/护照样式 */}
-      <div className="px-4 mb-6">
+      {/* License Card - 2.5D卡通风格 */}
+      <div className="px-4 mt-4 mb-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-br from-primary/90 to-primary rounded-3xl p-5 shadow-soft-lg relative overflow-hidden"
+          className="bg-[#FF5252] rounded-3xl p-5 border-4 border-[#B71C1C] border-b-[14px] relative overflow-hidden"
         >
           {/* 背景装饰 */}
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
@@ -112,22 +112,22 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
           
           <div className="flex items-start gap-4 relative z-10">
             {/* 头像 */}
-            <div className="w-20 h-20 bg-bg-secondary rounded-2xl flex items-center justify-center shadow-soft-md flex-shrink-0">
+            <div className="w-20 h-20 bg-white rounded-2xl border-4 border-[#5D4037] border-b-8 flex items-center justify-center flex-shrink-0">
               <span className="text-4xl">🦊</span>
             </div>
             
             {/* 信息 */}
-            <div className="flex-1 text-text-onPrimary">
-              <h2 className="text-xl font-black mb-3">Word Hunter</h2>
+            <div className="flex-1 text-white">
+              <h2 className="text-xl font-black mb-3 drop-shadow-md">Word Hunter</h2>
               
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2">
-                  <Hash className="w-4 h-4 opacity-70" />
-                  <span className="font-mono font-bold">{userId}</span>
+                  <Hash className="w-4 h-4 opacity-70" strokeWidth={2.5} />
+                  <span className="font-mono font-black drop-shadow-md">{userId}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 opacity-70" />
-                  <span className="opacity-90">{registerDate}</span>
+                  <Calendar className="w-4 h-4 opacity-70" strokeWidth={2.5} />
+                  <span className="font-bold drop-shadow-md">{registerDate}</span>
                 </div>
               </div>
             </div>
@@ -135,8 +135,8 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
           
           {/* 底部装饰线 */}
           <div className="mt-4 pt-3 border-t border-white/20 flex justify-between items-center">
-            <span className="text-xs text-white/60 font-medium">WORDCAPS OFFICIAL</span>
-            <span className="text-xs text-white/60 font-mono">v1.0</span>
+            <span className="text-xs text-white/80 font-black">WORDCAPS OFFICIAL</span>
+            <span className="text-xs text-white/80 font-mono font-bold">v1.0</span>
           </div>
         </motion.div>
       </div>
@@ -148,17 +148,17 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-bg-secondary rounded-3xl p-5 border border-text/10 shadow-card"
+          className="bg-white rounded-3xl p-5 border-4 border-[#5D4037] border-b-[14px]"
         >
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-10 h-10 bg-secondary/20 rounded-xl flex items-center justify-center">
-              <Diamond className="w-6 h-6 text-secondary fill-secondary/50" />
+            <div className="w-10 h-10 bg-[#4FC3F7] rounded-xl border-4 border-[#0288D1] flex items-center justify-center">
+              <Diamond className="w-5 h-5 text-white" strokeWidth={2.5} />
             </div>
           </div>
-          <p className="text-4xl font-black text-text">
+          <p className="text-4xl font-black text-[#5D4037]">
             <AnimatedNumber value={userData.diamonds} />
           </p>
-          <p className="text-sm text-text-secondary mt-1">💎 Diamonds</p>
+          <p className="text-sm text-[#1B5E20] mt-1 font-bold">💎 Diamonds</p>
         </motion.div>
 
         {/* 已掌握 */}
@@ -166,17 +166,17 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-bg-secondary rounded-3xl p-5 border border-text/10 shadow-card"
+          className="bg-white rounded-3xl p-5 border-4 border-[#5D4037] border-b-[14px]"
         >
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-10 h-10 bg-success/20 rounded-xl flex items-center justify-center">
-              <Trophy className="w-6 h-6 text-success" />
+            <div className="w-10 h-10 bg-[#66BB6A] rounded-xl border-4 border-[#2E7D32] flex items-center justify-center">
+              <Trophy className="w-5 h-5 text-white" strokeWidth={2.5} />
             </div>
           </div>
-          <p className="text-4xl font-black text-text">
+          <p className="text-4xl font-black text-[#5D4037]">
             <AnimatedNumber value={masteredCount} />
           </p>
-          <p className="text-sm text-text-secondary mt-1">🏆 Mastered</p>
+          <p className="text-sm text-[#1B5E20] mt-1 font-bold">🏆 Mastered</p>
         </motion.div>
       </div>
 
@@ -186,24 +186,24 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-bg-tertiary rounded-2xl p-4"
+          className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 border-4 border-[#5D4037] border-b-8"
         >
           <div className="flex justify-around text-center">
             <div>
-              <p className="text-2xl font-black text-text">{collectedCount}</p>
-              <p className="text-xs text-text-muted">已收集</p>
+              <p className="text-2xl font-black text-[#5D4037]">{collectedCount}</p>
+              <p className="text-xs text-[#1B5E20] font-bold">已收集</p>
             </div>
-            <div className="w-px bg-text/10" />
+            <div className="w-px bg-[#5D4037]/20" />
             <div>
-              <p className="text-2xl font-black text-text">{userData.totalCollected}</p>
-              <p className="text-xs text-text-muted">总照片</p>
+              <p className="text-2xl font-black text-[#5D4037]">{userData.totalCollected}</p>
+              <p className="text-xs text-[#1B5E20] font-bold">总照片</p>
             </div>
-            <div className="w-px bg-text/10" />
+            <div className="w-px bg-[#5D4037]/20" />
             <div>
-              <p className="text-2xl font-black text-text">
+              <p className="text-2xl font-black text-[#5D4037]">
                 {collectedCount > 0 ? Math.round((masteredCount / collectedCount) * 100) : 0}%
               </p>
-              <p className="text-xs text-text-muted">掌握率</p>
+              <p className="text-xs text-[#1B5E20] font-bold">掌握率</p>
             </div>
           </div>
         </motion.div>
@@ -217,11 +217,11 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
           transition={{ delay: 0.4 }}
         >
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-bold text-text flex items-center gap-2">
-              <Award className="w-4 h-4 text-secondary" />
-              成就
+            <h3 className="text-sm font-black text-[#5D4037] flex items-center gap-2">
+              <Award className="w-4 h-4 text-[#FFB74D]" strokeWidth={2.5} />
+              🏅 成就
             </h3>
-            <span className="text-xs font-black text-primary">
+            <span className="text-xs font-black text-[#FF5252]">
               {unlockedAchievements.length}/{ACHIEVEMENTS.length}
             </span>
           </div>
@@ -238,23 +238,23 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
                   animate={{ opacity: 1, scale: 1 }}
                   whileHover={isUnlocked ? { scale: 1.05 } : {}}
                   transition={{ delay: index * 0.03 }}
-                  className={`p-3 rounded-2xl border text-center relative overflow-hidden ${
+                  className={`p-3 rounded-2xl text-center relative overflow-hidden ${
                     isUnlocked 
-                      ? 'bg-secondary/10 border-secondary/30' 
-                      : 'bg-bg-tertiary border-text/5 opacity-50'
+                      ? 'bg-[#FFB74D] border-4 border-[#F57C00] border-b-8' 
+                      : 'bg-white/50 border-4 border-dashed border-[#5D4037]/30'
                   }`}
                 >
                   <div 
                     className={`w-8 h-8 mx-auto mb-1 rounded-full flex items-center justify-center ${
-                      isUnlocked ? 'bg-secondary/20' : 'bg-text/5'
+                      isUnlocked ? 'bg-white' : 'bg-[#5D4037]/10'
                     }`}
                   >
-                    <Icon className={`w-4 h-4 ${isUnlocked ? 'text-secondary' : 'text-text-muted'}`} />
+                    <Icon className={`w-4 h-4 ${isUnlocked ? 'text-[#F57C00]' : 'text-[#5D4037]/50'}`} strokeWidth={2.5} />
                   </div>
-                  <p className={`text-xs font-bold ${isUnlocked ? 'text-text' : 'text-text-muted'}`}>
+                  <p className={`text-xs font-black ${isUnlocked ? 'text-white drop-shadow-md' : 'text-[#5D4037]/50'}`}>
                     {achievement.title}
                   </p>
-                  <p className="text-[10px] text-text-muted mt-0.5">{achievement.desc}</p>
+                  <p className={`text-[10px] mt-0.5 font-bold ${isUnlocked ? 'text-white/80' : 'text-[#5D4037]/30'}`}>{achievement.desc}</p>
                 </motion.div>
               );
             })}
@@ -268,12 +268,12 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
-          whileTap={{ scale: 0.95 }}
+          whileTap={{ scale: 0.95, y: 4 }}
           onClick={handleReset}
-          className="w-full py-3 bg-bg-tertiary text-text-muted rounded-2xl font-medium text-sm flex items-center justify-center gap-2 hover:bg-error/10 hover:text-error transition-colors"
+          className="btn-3d w-full py-3 bg-gray-200 border-gray-400 text-gray-500 rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-[#FF5252] hover:border-[#B71C1C] hover:text-white transition-colors"
         >
-          <RotateCcw className="w-4 h-4" />
-          Reset Game (Debug)
+          <RotateCcw className="w-4 h-4" strokeWidth={2.5} />
+          Reset Game
         </motion.button>
       </div>
     </div>

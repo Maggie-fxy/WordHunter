@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useEffect, useState } from 'react';
 
-// 游戏冒险风格背景音乐 - 使用Web Audio API生成
+// 贪吃蛇风格背景音乐 - 8-bit电子游戏风格
 export function useBgm() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const isPlayingRef = useRef(false);
@@ -13,6 +13,7 @@ export function useBgm() {
   }>({ oscillators: [], gains: [], masterGain: null });
   const [isPlaying, setIsPlaying] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const hasAutoStartedRef = useRef(false); // 是否已自动启动过
 
   const getAudioContext = useCallback(() => {
     if (!audioContextRef.current) {
@@ -21,19 +22,21 @@ export function useBgm() {
     return audioContextRef.current;
   }, []);
 
-  // 冒险风格的音符序列 (C大调五声音阶 + 一些变化)
+  // 贪吃蛇风格的音符序列 - 经典8-bit游戏旋律
   const melodyNotes = [
-    262, 294, 330, 392, 440, // C4, D4, E4, G4, A4
-    392, 330, 294, 262, 294, // G4, E4, D4, C4, D4
-    330, 392, 440, 523, 440, // E4, G4, A4, C5, A4
-    392, 330, 294, 330, 262, // G4, E4, D4, E4, C4
+    // 主旋律 - 简单重复的上行下行模式
+    330, 330, 392, 392, 440, 440, 392, 0,   // E4, E4, G4, G4, A4, A4, G4, rest
+    349, 349, 330, 330, 294, 294, 262, 0,   // F4, F4, E4, E4, D4, D4, C4, rest
+    330, 392, 440, 523, 440, 392, 330, 0,   // E4, G4, A4, C5, A4, G4, E4, rest
+    294, 330, 294, 262, 247, 262, 294, 0,   // D4, E4, D4, C4, B3, C4, D4, rest
   ];
 
   const bassNotes = [
-    131, 131, 147, 147, // C3, C3, D3, D3
-    165, 165, 196, 196, // E3, E3, G3, G3
-    131, 131, 147, 147, // C3, C3, D3, D3
-    165, 196, 165, 131, // E3, G3, E3, C3
+    // 低音 - 稳定的节奏基础
+    131, 0, 165, 0,   // C3, rest, E3, rest
+    147, 0, 131, 0,   // D3, rest, C3, rest
+    165, 0, 196, 0,   // E3, rest, G3, rest
+    131, 0, 131, 0,   // C3, rest, C3, rest
   ];
 
   // 播放背景音乐
@@ -51,12 +54,12 @@ export function useBgm() {
 
       // 创建主音量控制
       const masterGain = ctx.createGain();
-      masterGain.gain.value = 0.15; // 背景音乐音量较低
+      masterGain.gain.value = 0.12; // 背景音乐音量较低
       masterGain.connect(ctx.destination);
       nodesRef.current.masterGain = masterGain;
 
       let noteIndex = 0;
-      const noteInterval = 300; // 每个音符300ms
+      const noteInterval = 150; // 贪吃蛇风格更快的节奏 150ms
 
       const playNote = () => {
         if (!isPlayingRef.current) return;
@@ -64,36 +67,43 @@ export function useBgm() {
         const currentCtx = audioContextRef.current;
         if (!currentCtx) return;
 
-        // 旋律音
-        const melodyOsc = currentCtx.createOscillator();
-        const melodyGain = currentCtx.createGain();
-        melodyOsc.connect(melodyGain);
-        melodyGain.connect(masterGain);
+        const melodyFreq = melodyNotes[noteIndex % melodyNotes.length];
         
-        melodyOsc.frequency.value = melodyNotes[noteIndex % melodyNotes.length];
-        melodyOsc.type = 'triangle'; // 柔和的三角波
-        
-        melodyGain.gain.setValueAtTime(0.3, currentCtx.currentTime);
-        melodyGain.gain.exponentialRampToValueAtTime(0.01, currentCtx.currentTime + 0.25);
-        
-        melodyOsc.start(currentCtx.currentTime);
-        melodyOsc.stop(currentCtx.currentTime + 0.25);
+        // 旋律音 - 只在非休止符时播放
+        if (melodyFreq > 0) {
+          const melodyOsc = currentCtx.createOscillator();
+          const melodyGain = currentCtx.createGain();
+          melodyOsc.connect(melodyGain);
+          melodyGain.connect(masterGain);
+          
+          melodyOsc.frequency.value = melodyFreq;
+          melodyOsc.type = 'square'; // 方波 - 经典8-bit音色
+          
+          melodyGain.gain.setValueAtTime(0.25, currentCtx.currentTime);
+          melodyGain.gain.exponentialRampToValueAtTime(0.01, currentCtx.currentTime + 0.12);
+          
+          melodyOsc.start(currentCtx.currentTime);
+          melodyOsc.stop(currentCtx.currentTime + 0.12);
+        }
 
-        // 低音 (每2个音符一个)
-        if (noteIndex % 2 === 0) {
-          const bassOsc = currentCtx.createOscillator();
-          const bassGain = currentCtx.createGain();
-          bassOsc.connect(bassGain);
-          bassGain.connect(masterGain);
-          
-          bassOsc.frequency.value = bassNotes[Math.floor(noteIndex / 2) % bassNotes.length];
-          bassOsc.type = 'sine';
-          
-          bassGain.gain.setValueAtTime(0.2, currentCtx.currentTime);
-          bassGain.gain.exponentialRampToValueAtTime(0.01, currentCtx.currentTime + 0.5);
-          
-          bassOsc.start(currentCtx.currentTime);
-          bassOsc.stop(currentCtx.currentTime + 0.5);
+        // 低音 (每4个音符一个)
+        if (noteIndex % 4 === 0) {
+          const bassFreq = bassNotes[Math.floor(noteIndex / 4) % bassNotes.length];
+          if (bassFreq > 0) {
+            const bassOsc = currentCtx.createOscillator();
+            const bassGain = currentCtx.createGain();
+            bassOsc.connect(bassGain);
+            bassGain.connect(masterGain);
+            
+            bassOsc.frequency.value = bassFreq;
+            bassOsc.type = 'square'; // 方波低音
+            
+            bassGain.gain.setValueAtTime(0.15, currentCtx.currentTime);
+            bassGain.gain.exponentialRampToValueAtTime(0.01, currentCtx.currentTime + 0.3);
+            
+            bassOsc.start(currentCtx.currentTime);
+            bassOsc.stop(currentCtx.currentTime + 0.3);
+          }
         }
 
         noteIndex++;
@@ -137,6 +147,27 @@ export function useBgm() {
       playBgm();
     }
   }, [playBgm, stopBgm]);
+
+  // 首次用户交互时自动开启背景音乐
+  useEffect(() => {
+    const handleFirstInteraction = () => {
+      if (!hasAutoStartedRef.current && !isPlayingRef.current) {
+        hasAutoStartedRef.current = true;
+        playBgm();
+      }
+      // 移除监听器
+      document.removeEventListener('click', handleFirstInteraction);
+      document.removeEventListener('touchstart', handleFirstInteraction);
+    };
+
+    document.addEventListener('click', handleFirstInteraction);
+    document.addEventListener('touchstart', handleFirstInteraction);
+
+    return () => {
+      document.removeEventListener('click', handleFirstInteraction);
+      document.removeEventListener('touchstart', handleFirstInteraction);
+    };
+  }, [playBgm]);
 
   // 组件卸载时清理
   useEffect(() => {

@@ -189,22 +189,22 @@ export function ReviewMode({ onBack }: ReviewModeProps) {
 
   if (reviewableCount === 0) {
     return (
-      <div className="h-screen bg-bg flex flex-col items-center justify-center p-6">
+      <div className="h-screen grass-bg flex flex-col items-center justify-center p-6">
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           className="text-center"
         >
-          <h2 className="text-2xl font-black text-text mb-2">暂无可复习的单词</h2>
-          <p className="text-text-secondary mb-10">去狩猎模式收集更多单词吧！</p>
+          <h2 className="text-2xl font-black text-[#5D4037] mb-2">暂无可复习的单词</h2>
+          <p className="text-[#1B5E20] mb-10">去狩猎模式收集更多单词吧！</p>
           <div className="flex justify-center">
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.05, rotate: 3 }}
+              whileTap={{ scale: 0.95, y: 10 }}
               onClick={onBack}
-              className="w-32 h-32 rounded-full bg-primary hover:bg-primary-hover shadow-soft-lg text-text-onPrimary font-black flex items-center justify-center hunting-button"
+              className="btn-3d-lg w-32 h-32 rounded-full bg-[#FF5252] border-[#B71C1C] text-white font-black flex items-center justify-center"
             >
-              <span className="text-base font-black tracking-wide text-center">START<br/>HUNTING</span>
+              <span className="text-base font-black tracking-wide text-center drop-shadow-md">START<br/>HUNTING</span>
             </motion.button>
           </div>
         </motion.div>
@@ -213,17 +213,17 @@ export function ReviewMode({ onBack }: ReviewModeProps) {
   }
 
   return (
-    <div className="h-screen bg-bg flex flex-col overflow-hidden">
+    <div className="h-screen grass-bg flex flex-col overflow-hidden">
       {/* 顶部导航 */}
-      <header className="flex items-center justify-between px-4 py-3 bg-bg border-b border-text/10">
+      <header className="flex items-center justify-between px-4 py-3 wood-bg border-b-4 border-[#5D4037]">
         <motion.button
-          whileTap={{ scale: 0.9 }}
+          whileTap={{ scale: 0.95, y: 2 }}
           onClick={onBack}
-          className="p-2 rounded-xl bg-warning border border-warning/30 shadow-soft"
+          className="btn-3d p-2 rounded-xl bg-[#FFB74D] border-[#F57C00]"
         >
-          <ArrowLeft className="w-5 h-5 text-text" />
+          <ArrowLeft className="w-5 h-5 text-white drop-shadow-md" strokeWidth={2.5} />
         </motion.button>
-        <h1 className="text-xl font-black text-text">复习模式</h1>
+        <h1 className="text-xl font-black text-white drop-shadow-md">复习模式</h1>
         <div className="w-10" />
       </header>
 
@@ -235,7 +235,7 @@ export function ReviewMode({ onBack }: ReviewModeProps) {
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex-1 max-h-[50%] bg-bg-secondary rounded-3xl border border-text/10 shadow-card overflow-hidden mb-4"
+              className="flex-1 max-h-[50%] bg-white rounded-3xl border-4 border-[#5D4037] border-b-[14px] overflow-hidden mb-4"
             >
               {currentImage ? (
                 <img
@@ -243,12 +243,12 @@ export function ReviewMode({ onBack }: ReviewModeProps) {
                   alt="Review"
                   className="w-full h-full object-contain p-4"
                   style={{
-                    background: 'linear-gradient(135deg, #FFFDF5 0%, #80CBC4 100%)',
+                    background: 'linear-gradient(135deg, #C8E6C9 0%, #A5D6A7 100%)',
                   }}
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-accent/10">
-                  <span className="text-text-muted font-bold">无图片</span>
+                <div className="w-full h-full flex items-center justify-center bg-[#C8E6C9]">
+                  <span className="text-[#5D4037] font-black">无图片</span>
                 </div>
               )}
             </motion.div>
@@ -263,7 +263,7 @@ export function ReviewMode({ onBack }: ReviewModeProps) {
                   exit={{ opacity: 0, y: -20 }}
                   className="space-y-3"
                 >
-                  <p className="text-center text-text font-black text-lg mb-4">这是什么？</p>
+                  <p className="text-center text-[#5D4037] font-black text-lg mb-4">🤔 这是什么？</p>
                   <div className="grid grid-cols-2 gap-3">
                     {reviewOptions.map((option, index) => {
                       const isSelected = selectedAnswer === option.word;
@@ -284,29 +284,21 @@ export function ReviewMode({ onBack }: ReviewModeProps) {
                             delay: index * 0.1,
                             x: { duration: 0.4 }
                           }}
-                          whileTap={{ scale: 0.95 }}
+                          whileTap={{ scale: 0.95, y: 4 }}
                           whileHover={{ scale: selectedAnswer ? 1 : 1.02 }}
                           onClick={() => handleChoiceAnswer(option.word)}
                           disabled={selectedAnswer !== null}
-                          className={`p-4 rounded-2xl border font-bold text-lg transition-all relative overflow-hidden ${
+                          className={`btn-3d p-4 rounded-2xl font-bold text-lg transition-all relative overflow-hidden ${
                             showCorrect
-                              ? 'bg-success/20 border-success shadow-soft'
+                              ? 'bg-[#66BB6A] border-[#2E7D32]'
                               : showWrong
-                                ? 'bg-primary text-text-onPrimary border-primary shadow-soft'
-                                : 'bg-bg-secondary border-text/10 shadow-card hover:shadow-soft-md'
+                                ? 'bg-[#FF5252] border-[#B71C1C]'
+                                : 'bg-white border-[#5D4037]'
                           }`}
                         >
-                          {/* 波纹效果 */}
-                          {isSelected && (
-                            <motion.div
-                              initial={{ scale: 0, opacity: 0.5 }}
-                              animate={{ scale: 4, opacity: 0 }}
-                              transition={{ duration: 0.6 }}
-                              className={`absolute inset-0 rounded-full ${isCorrectAnswer ? 'bg-success' : 'bg-primary'}`}
-                              style={{ transformOrigin: 'center' }}
-                            />
-                          )}
-                          <span className="text-text text-xl relative z-10">{option.word}</span>
+                          <span className={`text-xl relative z-10 font-black ${
+                            showCorrect || showWrong ? 'text-white drop-shadow-md' : 'text-[#5D4037]'
+                          }`}>{option.word}</span>
                         </motion.button>
                       );
                     })}
@@ -324,27 +316,27 @@ export function ReviewMode({ onBack }: ReviewModeProps) {
                 >
                   <div className="text-center">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs text-text-muted">
-                        剩余 {3 - attemptCount} 次机会
+                      <span className="text-xs font-bold text-[#5D4037]">
+                        ❤️ {3 - attemptCount}
                       </span>
-                      <p className="text-text font-black text-lg">请拼写这个单词</p>
+                      <p className="text-[#5D4037] font-black text-lg">✏️ 请拼写这个单词</p>
                       {/* 提示按钮 */}
                       <motion.button
-                        whileTap={{ scale: 0.9 }}
+                        whileTap={{ scale: 0.95, y: 2 }}
                         onClick={() => setHintLevel(prev => Math.min(prev + 1, 2))}
                         disabled={hintLevel >= 2}
-                        className={`p-2 rounded-xl border shadow-soft ${
+                        className={`btn-3d p-2 rounded-xl ${
                           hintLevel > 0 
-                            ? 'bg-secondary border-secondary-border' 
-                            : 'bg-bg-tertiary border-text/10'
+                            ? 'bg-[#FFB74D] border-[#F57C00]' 
+                            : 'bg-gray-200 border-gray-400'
                         } ${hintLevel >= 2 ? 'opacity-50' : ''}`}
                         title={hintLevel === 0 ? '显示首字母' : hintLevel === 1 ? '显示末字母' : '已用完提示'}
                       >
-                        <Lightbulb className="w-4 h-4 text-text" />
+                        <Lightbulb className={`w-4 h-4 ${hintLevel > 0 ? 'text-white' : 'text-gray-500'}`} strokeWidth={2.5} />
                       </motion.button>
                     </div>
-                    <div className="inline-block bg-success/20 px-4 py-2 rounded-full border border-success">
-                      <span className="text-base font-black text-text">{reviewWord.cn}</span>
+                    <div className="inline-block bg-[#C8E6C9] px-4 py-2 rounded-2xl border-4 border-[#2E7D32] border-b-8">
+                      <span className="text-base font-black text-[#1B5E20]">{reviewWord.cn}</span>
                     </div>
                   </div>
 
@@ -357,17 +349,17 @@ export function ReviewMode({ onBack }: ReviewModeProps) {
                         exit={{ opacity: 0, height: 0 }}
                         className="text-center"
                       >
-                        <div className="inline-block bg-secondary-soft px-4 py-2 rounded-xl border border-dashed border-secondary-border/50">
-                          <p className="text-sm text-text">
-                            💡 首字母: <span className="font-black text-primary">{reviewWord.word[0].toUpperCase()}</span>
+                        <div className="inline-block bg-[#FFF8E1] px-4 py-2 rounded-2xl border-4 border-[#F57C00] border-b-8">
+                          <p className="text-sm text-[#5D4037] font-bold">
+                            💡 首字母: <span className="font-black text-[#FF5252]">{reviewWord.word[0].toUpperCase()}</span>
                             {hintLevel >= 2 && (
                               <>
                                 {' · '}
-                                末字母: <span className="font-black text-primary">{reviewWord.word[reviewWord.word.length - 1].toUpperCase()}</span>
+                                末字母: <span className="font-black text-[#FF5252]">{reviewWord.word[reviewWord.word.length - 1].toUpperCase()}</span>
                               </>
                             )}
                             {' · '}
-                            共 <span className="font-black text-primary">{reviewWord.word.length}</span> 个字母
+                            共 <span className="font-black text-[#FF5252]">{reviewWord.word.length}</span> 个字母
                           </p>
                         </div>
                       </motion.div>
@@ -383,7 +375,7 @@ export function ReviewMode({ onBack }: ReviewModeProps) {
                         exit={{ opacity: 0 }}
                         className="text-center"
                       >
-                        <span className="text-sm text-primary font-bold">❌ 拼写错误，再试一次！</span>
+                        <span className="text-sm text-[#FF5252] font-black">❌ 拼写错误，再试一次！</span>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -395,17 +387,18 @@ export function ReviewMode({ onBack }: ReviewModeProps) {
                       onChange={(e) => setSpellingInput(e.target.value.toUpperCase())}
                       onKeyDown={(e) => e.key === 'Enter' && handleSpellingSubmit()}
                       placeholder="输入英文单词..."
-                      className={`flex-1 p-4 rounded-2xl border font-bold text-xl text-center bg-bg-secondary shadow-card focus:outline-none focus:ring-2 focus:ring-primary ${
-                        showWrongHint ? 'border-primary animate-wiggle' : 'border-text/10'
+                      className={`flex-1 p-4 rounded-2xl border-4 font-black text-xl text-center bg-white focus:outline-none ${
+                        showWrongHint ? 'border-[#FF5252] animate-wiggle' : 'border-[#5D4037]'
                       }`}
+                      style={{ borderBottomWidth: '8px' }}
                       autoFocus
                     />
                     <motion.button
-                      whileTap={{ scale: 0.95 }}
+                      whileTap={{ scale: 0.95, y: 4 }}
                       onClick={handleSpellingSubmit}
-                      className="p-4 bg-primary hover:bg-primary-hover rounded-2xl shadow-soft-md"
+                      className="btn-3d p-4 bg-[#4FC3F7] border-[#0288D1] rounded-2xl"
                     >
-                      <Keyboard className="w-6 h-6 text-text-onPrimary" />
+                      <Keyboard className="w-6 h-6 text-white drop-shadow-md" strokeWidth={2.5} />
                     </motion.button>
                   </div>
                 </motion.div>
@@ -418,31 +411,31 @@ export function ReviewMode({ onBack }: ReviewModeProps) {
                   animate={{ opacity: 1, scale: 1 }}
                   className="text-center space-y-4"
                 >
-                  <div className={`w-20 h-20 rounded-full border flex items-center justify-center mx-auto ${
-                    isCorrect ? 'bg-success border-success/50' : 'bg-primary border-primary/50'
+                  <div className={`w-20 h-20 rounded-full border-4 border-b-8 flex items-center justify-center mx-auto ${
+                    isCorrect ? 'bg-[#66BB6A] border-[#2E7D32]' : 'bg-[#FF5252] border-[#B71C1C]'
                   }`}>
                     {isCorrect ? (
-                      <Check className="w-10 h-10 text-text-onPrimary" />
+                      <Check className="w-10 h-10 text-white drop-shadow-md" strokeWidth={3} />
                     ) : (
-                      <X className="w-10 h-10 text-text-onPrimary" />
+                      <X className="w-10 h-10 text-white drop-shadow-md" strokeWidth={3} />
                     )}
                   </div>
                   
                   <div>
-                    <p className="text-3xl font-black text-text">{isCorrect ? '正确！' : '错误'}</p>
+                    <p className="text-3xl font-black text-[#5D4037]">{isCorrect ? '🎉 正确！' : '😢 错误'}</p>
                     {!isCorrect && (
-                      <p className="text-text-secondary mt-2">
-                        正确答案: <span className="font-bold text-primary">{reviewWord.word}</span>
+                      <p className="text-[#1B5E20] mt-2 font-bold">
+                        正确答案: <span className="font-black text-[#FF5252]">{reviewWord.word}</span>
                       </p>
                     )}
                   </div>
 
                   <motion.button
-                    whileTap={{ scale: 0.95 }}
+                    whileTap={{ scale: 0.95, y: 4 }}
                     onClick={handleNext}
-                    className="px-8 py-3 bg-primary hover:bg-primary-hover text-text-onPrimary rounded-2xl font-black shadow-soft-md"
+                    className="btn-3d px-8 py-3 bg-[#4FC3F7] border-[#0288D1] text-white rounded-2xl font-black"
                   >
-                    NEXT
+                    <span className="drop-shadow-md">NEXT</span>
                   </motion.button>
                 </motion.div>
               )}

@@ -5,19 +5,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
 
 :root {
-  /* Light Ethereal Warmth 配色系统 */
-  --color-bg: #FFFDF5;
+  /* 卡通田园风格配色系统 - 羊了个羊风格 */
+  --color-bg: #C1F080;
   --color-bg-secondary: #FFFFFF;
-  --color-bg-tertiary: #F5F8FC;
-  --color-text: #2D2D2D;
-  --color-text-secondary: #6B7280;
-  --color-text-muted: #A3A9B2;
-  --color-primary: #E57373;
-  --color-primary-hover: #DE5F5F;
-  --color-primary-soft: #FBEAEA;
-  --color-secondary: #FFD54F;
-  --color-secondary-soft: #FFF4CC;
-  --color-accent: #8FB6E8;
+  --color-bg-tertiary: #A8E063;
+  --color-bg-wood: #8D5524;
+  --color-text: #5D4037;
+  --color-text-secondary: #1B5E20;
+  --color-text-muted: #6D4C41;
+  --color-primary: #FF5252;
+  --color-primary-hover: #FF1744;
+  --color-primary-border: #B71C1C;
+  --color-secondary: #4FC3F7;
+  --color-secondary-border: #0288D1;
+  --color-accent: #FFB74D;
+  --color-accent-border: #F57C00;
+  --color-grass: #33691E;
+  --color-forest: #1B5E20;
 }
 
 * {
@@ -34,6 +38,53 @@ body {
   font-family: 'Nunito', sans-serif;
   background-color: var(--color-bg);
   color: var(--color-text);
+}
+
+/* 草地纹理背景 */
+.grass-bg {
+  background-color: #C1F080;
+  background-image: 
+    radial-gradient(circle at 20% 30%, #A8E063 2px, transparent 2px),
+    radial-gradient(circle at 60% 70%, #B5E878 3px, transparent 3px),
+    radial-gradient(circle at 80% 20%, #A8E063 2px, transparent 2px),
+    radial-gradient(circle at 40% 80%, #B5E878 2px, transparent 2px);
+  background-size: 100px 100px;
+}
+
+/* 木质纹理背景 */
+.wood-bg {
+  background-color: #8D5524;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 10px,
+    rgba(0, 0, 0, 0.1) 10px,
+    rgba(0, 0, 0, 0.1) 12px
+  );
+}
+
+/* 2.5D 按钮基础样式 */
+.btn-3d {
+  border-width: 4px;
+  border-bottom-width: 8px;
+  transition: all 100ms ease;
+}
+
+.btn-3d:active {
+  transform: translateY(4px);
+  border-bottom-width: 4px;
+}
+
+/* 2.5D 按钮 - 大号 */
+.btn-3d-lg {
+  border-width: 4px;
+  border-bottom-width: 14px;
+  transition: all 100ms ease;
+}
+
+.btn-3d-lg:active {
+  transform: translateY(10px);
+  border-bottom-width: 4px;
 }
 
 /* 相机视频流样式 */

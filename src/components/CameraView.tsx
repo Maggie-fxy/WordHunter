@@ -79,15 +79,18 @@ export function CameraView({ onCapture, onClose, onForceSuccess }: CameraViewPro
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center"
+            className="absolute inset-0 bg-[#1B5E20]/80 flex flex-col items-center justify-center"
           >
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+              className="w-16 h-16 bg-white rounded-full border-4 border-[#5D4037] flex items-center justify-center"
             >
-              <Loader2 className="w-12 h-12 text-white" />
+              <Loader2 className="w-10 h-10 text-[#5D4037]" strokeWidth={2.5} />
             </motion.div>
-            <p className="text-white mt-4 text-lg font-medium">AI 正在识别...</p>
+            <p className="text-white mt-4 text-lg font-black drop-shadow-md">
+              🔍 AI 正在识别...
+            </p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -99,29 +102,29 @@ export function CameraView({ onCapture, onClose, onForceSuccess }: CameraViewPro
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center p-6"
+            className="absolute inset-0 bg-[#1B5E20]/80 flex flex-col items-center justify-center p-6"
           >
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              className="bg-white rounded-2xl p-6 max-w-xs text-center shadow-xl"
+              className="bg-white rounded-3xl p-6 max-w-xs text-center border-4 border-[#5D4037] border-b-[14px]"
             >
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <X className="w-8 h-8 text-red-500" />
+              <div className="w-16 h-16 bg-[#FF5252] rounded-full border-4 border-[#B71C1C] flex items-center justify-center mx-auto mb-4">
+                <X className="w-8 h-8 text-white" strokeWidth={3} />
               </div>
-              <p className="text-slate-700 mb-2">
-                我看到了 <span className="font-bold text-primary-600">{state.lastResult.detected_object_cn}</span>
+              <p className="text-[#5D4037] mb-2 font-bold">
+                我看到了 <span className="font-black text-[#FF5252]">{state.lastResult.detected_object_cn}</span>
               </p>
-              <p className="text-slate-500 text-sm mb-4">
+              <p className="text-[#1B5E20] text-sm mb-4 font-bold">
                 {state.lastResult.feedback || '但这不是我们要找的哦~'}
               </p>
             </motion.div>
             
-            {/* 手动确认按钮 - 虚化效果 */}
+            {/* 手动确认按钮 */}
             <motion.button
               initial={{ opacity: 0 }}
-              animate={{ opacity: 0.6 }}
-              whileHover={{ opacity: 0.9 }}
+              animate={{ opacity: 0.7 }}
+              whileHover={{ opacity: 1 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => {
                 if (onForceSuccess && state.capturedImageUrl) {
@@ -130,7 +133,7 @@ export function CameraView({ onCapture, onClose, onForceSuccess }: CameraViewPro
                   dispatch({ type: 'FORCE_SUCCESS', payload: state.capturedImageUrl || '' });
                 }
               }}
-              className="mt-6 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white/70 text-sm border border-white/30"
+              className="mt-6 px-4 py-2 bg-white/30 backdrop-blur-sm rounded-2xl text-white text-sm font-bold border-2 border-white/50"
             >
               I promise it&apos;s correct
             </motion.button>
@@ -145,23 +148,23 @@ export function CameraView({ onCapture, onClose, onForceSuccess }: CameraViewPro
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center"
+            className="absolute inset-0 bg-[#1B5E20]/80 flex flex-col items-center justify-center"
           >
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: 'spring', stiffness: 300 }}
-              className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center"
+              className="w-20 h-20 bg-[#66BB6A] rounded-full border-4 border-[#2E7D32] border-b-8 flex items-center justify-center"
             >
-              <Check className="w-10 h-10 text-white" />
+              <Check className="w-10 h-10 text-white drop-shadow-md" strokeWidth={3} />
             </motion.div>
             <motion.p
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-white mt-4 text-xl font-bold"
+              className="text-white mt-4 text-xl font-black drop-shadow-md"
             >
-              Awesome! +1 Found
+              🎉 Awesome! +1 Found
             </motion.p>
           </motion.div>
         )}
@@ -169,12 +172,12 @@ export function CameraView({ onCapture, onClose, onForceSuccess }: CameraViewPro
 
       {/* 错误提示 */}
       {error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/80">
+        <div className="absolute inset-0 flex items-center justify-center bg-[#5D4037]/90">
           <div className="text-center text-white p-6">
-            <p className="text-lg mb-4">{error}</p>
+            <p className="text-lg mb-4 font-bold">{error}</p>
             <button
               onClick={startCamera}
-              className="px-6 py-2 bg-primary-500 rounded-full text-white"
+              className="btn-3d px-6 py-2 bg-[#4FC3F7] border-[#0288D1] rounded-2xl text-white font-black"
             >
               重试
             </button>
@@ -186,9 +189,9 @@ export function CameraView({ onCapture, onClose, onForceSuccess }: CameraViewPro
       <motion.button
         whileTap={{ scale: 0.9 }}
         onClick={handleClose}
-        className="absolute top-4 right-4 w-10 h-10 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white z-10"
+        className="absolute top-4 right-4 w-10 h-10 bg-[#FF5252] border-4 border-[#B71C1C] rounded-full flex items-center justify-center text-white z-10"
       >
-        <X className="w-5 h-5" />
+        <X className="w-5 h-5" strokeWidth={3} />
       </motion.button>
 
       {/* 底部控制栏 */}
@@ -199,22 +202,22 @@ export function CameraView({ onCapture, onClose, onForceSuccess }: CameraViewPro
               <motion.button
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                whileTap={{ scale: 0.95 }}
+                whileTap={{ scale: 0.95, y: 4 }}
                 onClick={() => dispatch({ type: 'RETRY' })}
-                className="flex items-center gap-2 px-6 py-3 bg-white rounded-full text-slate-700 font-medium shadow-lg"
+                className="btn-3d flex items-center gap-2 px-6 py-3 bg-[#4FC3F7] border-[#0288D1] rounded-2xl text-white font-black"
               >
-                <RotateCcw className="w-5 h-5" />
-                再试一次
+                <RotateCcw className="w-5 h-5" strokeWidth={2.5} />
+                <span className="drop-shadow-md">再试一次</span>
               </motion.button>
             ) : (
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={handleCapture}
                 disabled={!isStreaming}
-                className="shutter-btn w-20 h-20 rounded-full bg-white border-4 border-slate-300 flex items-center justify-center shadow-lg disabled:opacity-50"
+                className="w-20 h-20 rounded-full bg-white border-4 border-[#5D4037] border-b-8 flex items-center justify-center disabled:opacity-50"
               >
-                <div className="w-16 h-16 rounded-full bg-white border-2 border-slate-400 flex items-center justify-center">
-                  <Camera className="w-8 h-8 text-slate-600" />
+                <div className="w-14 h-14 rounded-full bg-[#FF5252] border-4 border-[#B71C1C] flex items-center justify-center">
+                  <Camera className="w-7 h-7 text-white drop-shadow-md" strokeWidth={2.5} />
                 </div>
               </motion.button>
             )}
