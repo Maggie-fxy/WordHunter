@@ -1,10 +1,17 @@
 'use client';
 
-import React, { createContext, useContext, useReducer, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, ReactNode, useEffect, useCallback } from 'react';
 import { GameState, GameAction, CollectedImage, UserData, WordRecord } from '@/types';
 import { getRandomWord } from '@/data/wordBank';
+import { useAuth } from './AuthContext';
+import { 
+  getUserLearningData, 
+  handleCollectionSuccess, 
+  updateUserStats,
+  upsertWordRecord 
+} from '@/lib/supabase/dataService';
 
-// 本地存储键
+// 本地存储键（用于未登录用户的本地缓存）
 const STORAGE_KEY = 'wordcaps_user_data';
 
 // 初始用户数据
@@ -39,8 +46,8 @@ const CLEAR_DATA_FLAG: number = 0;        //CLEAR_DATA_FLAG = 1 → 清除所有
 export const REMOVE_BG_FLAG: number = 1;  //REMOVE_BG_FLAG = 0 → 使用原图 REMOVE_BG_FLAG = 1 → 进行AI抠图
 
 
-// 从本地存储加载用户数据
-function loadUserData(): UserData {
+// 从本地存储加载用户数据（未登录时使用）
+function loadLocalUserData(): UserData {
   if (typeof window === 'undefined') return initialUserData;
   
   // 根据标志位决定是否清除数据
@@ -57,18 +64,18 @@ function loadUserData(): UserData {
       return JSON.parse(saved);
     }
   } catch (e) {
-    console.error('加载用户数据失败:', e);
+    console.error('加载本地用户数据失败:', e);
   }
   return initialUserData;
 }
 
-// 保存用户数据到本地存储
-function saveUserData(userData: UserData) {
+// 保存用户数据到本地存储（未登录时使用）
+function saveLocalUserData(userData: UserData) {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
   } catch (e) {
-    console.error('保存用户数据失败:', e);
+    console.error('保存本地用户数据失败:', e);
   }
 }
 
@@ -167,7 +174,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       }
       
       // 保存到本地存储
-      saveUserData(newUserData);
+      saveLocalUserData(newUserData);
       
       return {
         ...state,
@@ -229,7 +236,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         };
       }
       
-      saveUserData(newUserData);
+      saveLocalUserData(newUserData);
       
       return {
         ...state,
@@ -281,14 +288,14 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'ADD_DIAMOND': {
       const newUserData = { ...state.userData, diamonds: state.userData.diamonds + 1 };
-      saveUserData(newUserData);
+      saveLocalUserData(newUserData);
       return { ...state, userData: newUserData };
     }
 
     case 'USE_HINT': {
       if (state.userData.diamonds < 1) return state;
       const newUserData = { ...state.userData, diamonds: state.userData.diamonds - 1 };
-      saveUserData(newUserData);
+      saveLocalUserData(newUserData);
       return { ...state, userData: newUserData, showHint: true };
     }
 
@@ -317,7 +324,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           record.lastReviewAt = new Date();
           // 选择题答对后进入默写模式
           if (record.choiceCorrect >= 1) {
-            saveUserData(newUserData);
+            saveLocalUserData(newUserData);
             return {
               ...state,
               userData: newUserData,
@@ -326,7 +333,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
             };
           }
         }
-        saveUserData(newUserData);
+        saveLocalUserData(newUserData);
         return { ...state, userData: newUserData, reviewPhase: 'RESULT' };
       }
       
@@ -348,7 +355,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
             record.mastered = true;
           }
         }
-        saveUserData(newUserData);
+        saveLocalUserData(newUserData);
         return { ...state, userData: newUserData, reviewPhase: 'RESULT' };
       }
       
@@ -370,7 +377,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case 'SAVE_WORD_RECORD': {
       const newUserData = { ...state.userData };
       newUserData.wordRecords[action.payload.wordId] = action.payload;
-      saveUserData(newUserData);
+      saveLocalUserData(newUserData);
       return { ...state, userData: newUserData };
     }
 
@@ -384,18 +391,54 @@ interface GameContextType {
   dispatch: React.Dispatch<GameAction>;
   startNewGame: () => void;
   nextWord: () => void;
+  syncToCloud: (userData: UserData) => Promise<void>;
+  handleCollectionSuccessAction: (wordId: string, imageUrl: string, detectedObject: string) => Promise<boolean>;
+  isLoggedIn: boolean;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
 export function GameProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(gameReducer, initialState);
+  const { user } = useAuth();
 
-  // 加载用户数据
+  // 加载用户数据 - 登录用户从 Supabase 加载，未登录用户从本地存储加载
   useEffect(() => {
-    const userData = loadUserData();
-    dispatch({ type: 'LOAD_USER_DATA', payload: userData });
-  }, []);
+    const loadData = async () => {
+      if (user) {
+        // 已登录：从 Supabase 加载
+        try {
+          const cloudData = await getUserLearningData(user.id);
+          dispatch({ type: 'LOAD_USER_DATA', payload: cloudData });
+          console.log('已从云端加载用户数据');
+        } catch (e) {
+          console.error('从云端加载数据失败，使用本地数据:', e);
+          const localData = loadLocalUserData();
+          dispatch({ type: 'LOAD_USER_DATA', payload: localData });
+        }
+      } else {
+        // 未登录：从本地存储加载
+        const localData = loadLocalUserData();
+        dispatch({ type: 'LOAD_USER_DATA', payload: localData });
+      }
+    };
+    
+    loadData();
+  }, [user]);
+
+  // 同步数据到 Supabase（登录用户）
+  const syncToCloud = useCallback(async (userData: UserData) => {
+    if (!user) return;
+    
+    try {
+      await updateUserStats(user.id, {
+        diamonds: userData.diamonds,
+        total_collected: userData.totalCollected,
+      });
+    } catch (e) {
+      console.error('同步数据到云端失败:', e);
+    }
+  }, [user]);
 
   const startNewGame = () => {
     const word = getRandomWord();
@@ -408,8 +451,35 @@ export function GameProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'NEXT_WORD', payload: word });
   };
 
+  // 收集成功处理（支持云端同步）
+  const handleCollectionSuccessAction = useCallback(async (
+    wordId: string,
+    imageUrl: string,
+    detectedObject: string
+  ) => {
+    if (user) {
+      // 已登录：同步到 Supabase
+      const result = await handleCollectionSuccess(user.id, wordId, imageUrl, detectedObject);
+      if (result.success) {
+        // 重新加载云端数据
+        const cloudData = await getUserLearningData(user.id);
+        dispatch({ type: 'LOAD_USER_DATA', payload: cloudData });
+      }
+      return result.success;
+    }
+    return true; // 未登录时由 reducer 处理本地存储
+  }, [user]);
+
   return (
-    <GameContext.Provider value={{ state, dispatch, startNewGame, nextWord }}>
+    <GameContext.Provider value={{ 
+      state, 
+      dispatch, 
+      startNewGame, 
+      nextWord,
+      syncToCloud,
+      handleCollectionSuccessAction,
+      isLoggedIn: !!user,
+    }}>
       {children}
     </GameContext.Provider>
   );

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { AuthProvider } from "@/context/AuthContext";
 import { GameProvider } from "@/context/GameContext";
 
 export const metadata: Metadata = {
@@ -22,9 +23,11 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body className="antialiased">
-        <GameProvider>
-          {children}
-        </GameProvider>
+        <AuthProvider>
+          <GameProvider>
+            {children}
+          </GameProvider>
+        </AuthProvider>
       </body>
     </html>
   );

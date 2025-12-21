@@ -2,9 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Diamond, Trophy, Calendar, Hash, RotateCcw, Award, Star, Zap, Target } from 'lucide-react';
+import { Diamond, Trophy, Calendar, Hash, RotateCcw, Award, Star, Zap, Target, LogIn, LogOut, User } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useGame } from '@/context/GameContext';
+import { useAuth } from '@/context/AuthContext';
+import { AuthModal } from './AuthModal';
 
 interface ProfilePageProps {
   onBack?: () => void;
@@ -60,6 +62,8 @@ const ACHIEVEMENTS = [
 export function ProfilePage({ onBack }: ProfilePageProps) {
   const { state } = useGame();
   const { userData } = state;
+  const { user, profile, signOut, isLoading: authLoading } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // 计算已掌握的单词数
   const masteredCount = Object.values(userData.wordRecords).filter(r => r.mastered).length;
@@ -73,21 +77,36 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
     return false;
   });
 
-  // 生成用户ID（基于首次使用时间）
-  const userId = `WC${String(userData.totalCollected + 1000).padStart(6, '0')}`;
+  // 用户ID：登录用户显示邮箱前缀，未登录显示本地ID
+  const displayUserId = user 
+    ? user.email?.split('@')[0] || 'Hunter'
+    : `WC${String(userData.totalCollected + 1000).padStart(6, '0')}`;
   
-  // 模拟注册日期
-  const registerDate = new Date().toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
+  // 注册日期
+  const registerDate = user?.created_at 
+    ? new Date(user.created_at).toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      })
+    : new Date().toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
 
   // 重置游戏
   const handleReset = () => {
     if (confirm('确定要重置所有游戏进度吗？此操作不可撤销！')) {
       localStorage.removeItem('wordcaps_user_data');
       window.location.reload();
+    }
+  };
+
+  // 登出
+  const handleSignOut = async () => {
+    if (confirm('确定要退出登录吗？')) {
+      await signOut();
     }
   };
 
@@ -123,7 +142,7 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2">
                   <Hash className="w-4 h-4 opacity-70" strokeWidth={2.5} />
-                  <span className="font-mono font-black drop-shadow-md">{userId}</span>
+                  <span className="font-mono font-black drop-shadow-md">{displayUserId}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 opacity-70" strokeWidth={2.5} />
@@ -133,10 +152,28 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
             </div>
           </div>
           
-          {/* 底部装饰线 */}
+          {/* 底部装饰线 + 登录状态 */}
           <div className="mt-4 pt-3 border-t border-white/20 flex justify-between items-center">
-            <span className="text-xs text-white/80 font-black">WORDCAPS OFFICIAL</span>
-            <span className="text-xs text-white/80 font-mono font-bold">v1.0</span>
+            <span className="text-xs text-white/80 font-black">
+              {user ? '☁️ 云端同步' : '📱 本地存储'}
+            </span>
+            {user ? (
+              <button
+                onClick={handleSignOut}
+                className="flex items-center gap-1 text-xs text-white/80 hover:text-white font-bold transition-colors"
+              >
+                <LogOut className="w-3 h-3" />
+                退出登录
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="flex items-center gap-1 text-xs text-white bg-white/20 hover:bg-white/30 px-2 py-1 rounded-lg font-bold transition-colors"
+              >
+                <LogIn className="w-3 h-3" />
+                登录/注册
+              </button>
+            )}
           </div>
         </motion.div>
       </div>
@@ -276,6 +313,9 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
           Reset Game
         </motion.button>
       </div>
+
+      {/* 登录弹窗 */}
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </div>
   );
 }
