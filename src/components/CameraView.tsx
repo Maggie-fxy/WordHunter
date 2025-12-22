@@ -195,8 +195,8 @@ export function CameraView({ onCapture, onClose, onForceSuccess, analyzingText }
         <X className="w-5 h-5" strokeWidth={3} />
       </motion.button>
 
-      {/* 底部控制栏 */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 flex items-center justify-center">
+      {/* 底部控制栏 - bottom-28 避开底部导航栏，pb-safe 适配移动端安全区域 */}
+      <div className="absolute bottom-28 left-0 right-0 p-6 flex items-center justify-center" style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}>
         {!isAnalyzing && !isSuccess && (
           <>
             {isFailed ? (
