@@ -15,16 +15,21 @@ interface ReviewModeProps {
 
 // 检查图片URL是否有效
 const isValidImageUrl = (url: string | undefined | null): boolean => {
-  if (!url) return false;
-  // 检查是否是base64图片
-  if (url.startsWith('data:image/')) return true;
+  if (!url || url.trim() === '') return false;
+  // 检查是否是base64图片（需要有实际内容）
+  if (url.startsWith('data:image/')) {
+    // 确保base64有实际数据（至少有逗号后的内容）
+    const commaIndex = url.indexOf(',');
+    if (commaIndex === -1 || url.length <= commaIndex + 10) return false;
+    return true;
+  }
   // 检查是否是http/https URL
   if (url.startsWith('http://') || url.startsWith('https://')) return true;
   return false;
 };
 
 export function ReviewMode({ onBack }: ReviewModeProps) {
-  const { state, dispatch } = useGame();
+  const { state, dispatch, syncReviewProgress, isLoggedIn } = useGame();
   const { userData, reviewWord, reviewOptions, reviewPhase } = state;
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [spellingInput, setSpellingInput] = useState('');
@@ -68,6 +73,17 @@ export function ReviewMode({ onBack }: ReviewModeProps) {
     };
   }, [clearAllTimers]);
 
+  useEffect(() => {
+    setSelectedAnswer(null);
+    setSpellingInput('');
+    setIsCorrect(null);
+    setCurrentImage(null);
+    setHintLevel(0);
+    setAttemptCount(0);
+    setShowWrongHint(false);
+    isProcessingRef.current = false;
+  }, []);
+
   // 获取可复习的单词（有收集记录且未掌握的，至少1张有效图片）
   const getReviewableWords = useCallback((): WordRecord[] => {
     return Object.values(userData.wordRecords).filter(
@@ -80,7 +96,7 @@ export function ReviewMode({ onBack }: ReviewModeProps) {
   }, [userData.wordRecords]);
 
   // 开始新的复习
-  const startNewReview = useCallback(() => {
+  const startNewReview = useCallback((excludeWordIds: string[] = []) => {
     // 防止重复触发
     if (isProcessingRef.current) {
       console.log('正在处理中，跳过重复调用');
@@ -90,7 +106,9 @@ export function ReviewMode({ onBack }: ReviewModeProps) {
     // 清理之前的定时器
     clearAllTimers();
     
-    const reviewableRecords = getReviewableWords();
+    const reviewableRecords = getReviewableWords().filter(
+      record => !excludeWordIds.includes(record.wordId)
+    );
     console.log('可复习的单词记录:', reviewableRecords.length);
     if (reviewableRecords.length === 0) return;
 
@@ -103,12 +121,22 @@ export function ReviewMode({ onBack }: ReviewModeProps) {
     // 过滤出有效图片，然后随机选择一张
     const validImages = randomRecord.images.filter(img => isValidImageUrl(img.url));
     if (validImages.length === 0) {
-      console.log('没有有效图片，跳过此单词');
+      console.log('没有有效图片，跳过此单词，尝试下一个');
+      // 递归调用，排除当前无效图片的单词
+      startNewReview([...excludeWordIds, randomRecord.wordId]);
       return;
     }
     const randomImage = validImages[Math.floor(Math.random() * validImages.length)];
-    console.log('选中的图片:', randomImage?.url?.substring(0, 50) + '...');
-    setCurrentImage(randomImage?.url || null);
+    const imageUrl = randomImage?.url;
+    console.log('选中的图片:', imageUrl?.substring(0, 50) + '...');
+    
+    // 再次验证图片URL有效性
+    if (!isValidImageUrl(imageUrl)) {
+      console.log('选中的图片URL无效，跳过此单词');
+      startNewReview([...excludeWordIds, randomRecord.wordId]);
+      return;
+    }
+    setCurrentImage(imageUrl);
 
     // 判断是选择题还是默写
     const shouldSpell = randomRecord.choiceCorrect >= 1;
@@ -119,10 +147,9 @@ export function ReviewMode({ onBack }: ReviewModeProps) {
         type: 'START_REVIEW', 
         payload: { word, options: [] } 
       });
-      // 手动设置为默写阶段 - 使用安全的setTimeout
-      safeSetTimeout(() => {
-        dispatch({ type: 'ANSWER_CHOICE', payload: word.word });
-      }, 0);
+      // 使用 SKIP_TO_SPELLING 直接进入默写阶段，不增加 choiceCorrect 计数
+      // 这里必须同步执行：如果依赖 setTimeout，组件在快速切换模式时卸载会清理定时器，导致卡在 CHOICE 且 options 为空
+      dispatch({ type: 'SKIP_TO_SPELLING' });
     } else {
       // 选择题模式
       const options = getRandomOptions(word, 4);
@@ -146,14 +173,14 @@ export function ReviewMode({ onBack }: ReviewModeProps) {
     if (hasInitializedRef.current) return;
     
     const reviewableRecords = getReviewableWords();
-    if (!reviewWord && reviewableRecords.length > 0) {
+    if (reviewableRecords.length > 0) {
       hasInitializedRef.current = true;
       startNewReview();
     }
   }, [reviewWord, getReviewableWords, startNewReview]);
 
   // 撒花/撒钻石特效
-  const triggerConfetti = () => {
+  const triggerConfetti = useCallback(() => {
     const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 1000 };
     
     // 撒钻石效果（使用黄色和金色）
@@ -164,7 +191,8 @@ export function ReviewMode({ onBack }: ReviewModeProps) {
       colors: ['#FFD54F', '#F2C94C', '#FFF4CC', '#FFE082'],
     });
     
-    setTimeout(() => {
+    // 使用 safeSetTimeout 确保组件卸载后不会执行
+    safeSetTimeout(() => {
       confetti({
         ...defaults,
         particleCount: 30,
@@ -178,7 +206,7 @@ export function ReviewMode({ onBack }: ReviewModeProps) {
         colors: ['#FFD54F', '#F2C94C', '#FFF4CC'],
       });
     }, 150);
-  };
+  }, [safeSetTimeout]);
 
   // 处理选择题答案
   const handleChoiceAnswer = (answer: string) => {
@@ -193,14 +221,26 @@ export function ReviewMode({ onBack }: ReviewModeProps) {
       playSuccess();
       triggerConfetti();
       isProcessingRef.current = true;
-      // 正确后停留1.5秒，然后自动进入下一题
+      // 正确后停留1.5秒，然后进入默写阶段
       safeSetTimeout(() => {
         dispatch({ type: 'ANSWER_CHOICE', payload: answer });
-        // 再等0.5秒后自动开始下一题
-        safeSetTimeout(() => {
-          isProcessingRef.current = false;
-          startNewReview();
-        }, 500);
+        // 登录用户同步复习进度到云端
+        if (isLoggedIn && reviewWord) {
+          const record = userData.wordRecords[reviewWord.id];
+          if (record) {
+            syncReviewProgress(
+              reviewWord.id,
+              record.choiceCorrect + 1,
+              record.spellingCorrect,
+              record.mastered
+            );
+          }
+        }
+        // 重置状态准备默写
+        setSelectedAnswer(null);
+        setIsCorrect(null);
+        setSpellingInput('');
+        isProcessingRef.current = false;
       }, 1500);
     } else {
       playError();
@@ -226,6 +266,18 @@ export function ReviewMode({ onBack }: ReviewModeProps) {
       // 正确后停留1.5秒，然后自动进入下一题
       safeSetTimeout(() => {
         dispatch({ type: 'ANSWER_SPELLING', payload: spellingInput });
+        // 登录用户同步复习进度到云端
+        if (isLoggedIn && reviewWord) {
+          const record = userData.wordRecords[reviewWord.id];
+          if (record) {
+            syncReviewProgress(
+              reviewWord.id,
+              record.choiceCorrect,
+              record.spellingCorrect + 1,
+              true // 默写正确，标记为已掌握
+            );
+          }
+        }
         // 再等0.5秒后自动开始下一题
         safeSetTimeout(() => {
           isProcessingRef.current = false;
@@ -255,6 +307,16 @@ export function ReviewMode({ onBack }: ReviewModeProps) {
   };
 
   const reviewableCount = getReviewableWords().length;
+
+  const fallbackImageUrl = (() => {
+    if (!reviewWord) return null;
+    const record = userData.wordRecords[reviewWord.id];
+    if (!record) return null;
+    const valid = record.images.filter(img => isValidImageUrl(img.url));
+    return valid.length > 0 ? valid[0].url : null;
+  })();
+
+  const displayImageUrl = currentImage || fallbackImageUrl;
 
   if (reviewableCount === 0) {
     return (
@@ -312,9 +374,9 @@ export function ReviewMode({ onBack }: ReviewModeProps) {
               animate={{ opacity: 1, y: 0 }}
               className="flex-1 max-h-[50%] bg-white rounded-3xl border-4 border-[#5D4037] border-b-[14px] overflow-hidden mb-4"
             >
-              {currentImage ? (
+              {displayImageUrl ? (
                 <img
-                  src={currentImage}
+                  src={displayImageUrl}
                   alt="Review"
                   className="w-full h-full object-contain p-4"
                   style={{
@@ -446,7 +508,7 @@ export function ReviewMode({ onBack }: ReviewModeProps) {
                   
                   {/* 错误提示 */}
                   <AnimatePresence>
-                    {showWrongHint && (
+                    {showWrongHint && attemptCount > 0 && (
                       <motion.div
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}

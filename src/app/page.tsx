@@ -33,7 +33,7 @@ const ACHIEVEMENTS = [
 ];
 
 export default function HomePage() {
-  const { state, dispatch, startNewGame, nextWord } = useGame();
+  const { state, dispatch, startNewGame, nextWord, handleCollectionSuccessAction, isLoggedIn } = useGame();
   const { currentWord, collectedImages, phase, userData, showHint, mode } = state;
   const [showVictory, setShowVictory] = useState(false);
   const { playClick, playSuccess } = useSound();
@@ -338,6 +338,18 @@ export default function HomePage() {
           type: 'ANALYSIS_SUCCESS',
           payload: { result: aiResult, imageUrl: finalImageUrl },
         });
+
+        if (isLoggedIn && currentWord) {
+          void handleCollectionSuccessAction(
+            currentWord.id,
+            finalImageUrl,
+            aiResult.detected_object_en
+          ).then(success => {
+            if (!success) {
+              dispatch({ type: 'SET_ERROR', payload: '云端同步失败，请稍后重试' });
+            }
+          });
+        }
         setAnalyzingText('');
         // 2秒后隐藏动画和重置锁
         setTimeout(() => {
@@ -361,6 +373,8 @@ export default function HomePage() {
 
   // 手动确认正确
   const handleForceSuccess = async (imageData: string) => {
+    if (!currentWord) return;
+
     // 防止重复处理
     if (isProcessingRef.current) {
       console.log('Already processing, skip force success');
@@ -403,6 +417,18 @@ export default function HomePage() {
     setNewImageUrl(finalImageUrl);
     setShowImageAnimation(true);
     dispatch({ type: 'FORCE_SUCCESS', payload: finalImageUrl });
+
+    if (isLoggedIn) {
+      void handleCollectionSuccessAction(
+        currentWord.id,
+        finalImageUrl,
+        currentWord.word
+      ).then(success => {
+        if (!success) {
+          dispatch({ type: 'SET_ERROR', payload: '云端同步失败，请稍后重试' });
+        }
+      });
+    }
     // 2秒后隐藏动画和重置锁
     setTimeout(() => {
       setShowImageAnimation(false);

@@ -259,6 +259,13 @@ export function WordBook({ onBack }: WordBookProps) {
   // 未收集的单词
   const uncollectedWords = allWords.filter(item => !item.isCollected);
 
+  // 已收集按等级分层（3=稀有，2=中等，1=普通）
+  const collectedByDifficulty = {
+    3: collectedWords.filter(item => item.word.difficulty === 3),
+    2: collectedWords.filter(item => item.word.difficulty === 2),
+    1: collectedWords.filter(item => item.word.difficulty === 1),
+  };
+
   // 统计
   const totalDiamonds = collectedWords.reduce((sum, item) => sum + getDiamondsByDifficulty(item.word.difficulty), 0);
 
@@ -315,19 +322,77 @@ export function WordBook({ onBack }: WordBookProps) {
                 <h2 className="text-sm font-black text-[#5D4037] mb-2 flex items-center gap-2">
                   ✨ 已收集 ({collectedWords.length})
                 </h2>
-                <div className="grid grid-cols-5 gap-2">
-                  {collectedWords.map((item, index) => (
-                    <CollectedCard
-                      key={item.word.id}
-                      word={item.word}
-                      record={item.record!}
-                      index={index}
-                      onClick={() => {
-                      playClick();
-                      setSelectedWord({ word: item.word, record: item.record });
-                    }}
-                    />
-                  ))}
+
+                {/* 分层展示 */}
+                <div className="space-y-4">
+                  {collectedByDifficulty[3].length > 0 && (
+                    <div>
+                      <h3 className="text-xs font-black text-[#F57C00] mb-2 flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-[#FFB74D]" />
+                        Rare ({collectedByDifficulty[3].length})
+                      </h3>
+                      <div className="grid grid-cols-5 gap-2">
+                        {collectedByDifficulty[3].map((item, index) => (
+                          <CollectedCard
+                            key={item.word.id}
+                            word={item.word}
+                            record={item.record!}
+                            index={index}
+                            onClick={() => {
+                              playClick();
+                              setSelectedWord({ word: item.word, record: item.record });
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {collectedByDifficulty[2].length > 0 && (
+                    <div>
+                      <h3 className="text-xs font-black text-[#0288D1] mb-2 flex items-center gap-2">
+                        <Diamond className="w-4 h-4 text-[#4FC3F7]" />
+                        Medium ({collectedByDifficulty[2].length})
+                      </h3>
+                      <div className="grid grid-cols-5 gap-2">
+                        {collectedByDifficulty[2].map((item, index) => (
+                          <CollectedCard
+                            key={item.word.id}
+                            word={item.word}
+                            record={item.record!}
+                            index={index}
+                            onClick={() => {
+                              playClick();
+                              setSelectedWord({ word: item.word, record: item.record });
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {collectedByDifficulty[1].length > 0 && (
+                    <div>
+                      <h3 className="text-xs font-black text-[#5D4037] mb-2 flex items-center gap-2">
+                        <Star className="w-4 h-4 text-[#5D4037]" />
+                        Common ({collectedByDifficulty[1].length})
+                      </h3>
+                      <div className="grid grid-cols-5 gap-2">
+                        {collectedByDifficulty[1].map((item, index) => (
+                          <CollectedCard
+                            key={item.word.id}
+                            word={item.word}
+                            record={item.record!}
+                            index={index}
+                            onClick={() => {
+                              playClick();
+                              setSelectedWord({ word: item.word, record: item.record });
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

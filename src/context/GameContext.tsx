@@ -312,6 +312,14 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         reviewAnswer: '',
       };
 
+    case 'SKIP_TO_SPELLING':
+      // 跳过选择题直接进入默写阶段，不增加choiceCorrect计数
+      return {
+        ...state,
+        reviewPhase: 'SPELLING',
+        reviewAnswer: '',
+      };
+
     case 'ANSWER_CHOICE': {
       const isCorrect = action.payload === state.reviewWord?.word;
       const wordId = state.reviewWord?.id || '';
@@ -392,6 +400,7 @@ interface GameContextType {
   startNewGame: () => void;
   nextWord: () => void;
   syncToCloud: (userData: UserData) => Promise<void>;
+  syncReviewProgress: (wordId: string, choiceCorrect: number, spellingCorrect: number, mastered: boolean) => Promise<void>;
   handleCollectionSuccessAction: (wordId: string, imageUrl: string, detectedObject: string) => Promise<boolean>;
   isLoggedIn: boolean;
 }
@@ -440,6 +449,27 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
+  // 同步复习进度到云端（登录用户）
+  const syncReviewProgress = useCallback(async (
+    wordId: string,
+    choiceCorrect: number,
+    spellingCorrect: number,
+    mastered: boolean
+  ) => {
+    if (!user) return;
+    
+    try {
+      await upsertWordRecord(user.id, wordId, {
+        choice_correct: choiceCorrect,
+        spelling_correct: spellingCorrect,
+        mastered: mastered,
+        last_review_at: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.error('同步复习进度到云端失败:', e);
+    }
+  }, [user]);
+
   const startNewGame = () => {
     const word = getRandomWord();
     dispatch({ type: 'SET_WORD', payload: word });
@@ -477,6 +507,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       startNewGame, 
       nextWord,
       syncToCloud,
+      syncReviewProgress,
       handleCollectionSuccessAction,
       isLoggedIn: !!user,
     }}>

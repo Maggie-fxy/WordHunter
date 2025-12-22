@@ -102,6 +102,7 @@ export type GameAction =
   | { type: 'TOGGLE_HINT' }
   // 复习模式
   | { type: 'START_REVIEW'; payload: { word: Word; options: Word[] } }
+  | { type: 'SKIP_TO_SPELLING' } // 跳过选择题直接进入默写（不增加choiceCorrect计数）
   | { type: 'ANSWER_CHOICE'; payload: string }
   | { type: 'ANSWER_SPELLING'; payload: string }
   | { type: 'NEXT_REVIEW' }
