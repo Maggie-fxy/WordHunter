@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#FFFDF5">
+    <meta name="description" content="单词宝可梦 - Word Hunter 启动页">
+    <title>单词宝可梦 - Word Hunter</title>
+    <link rel="stylesheet" href="src/splash/splash.css">
+</head>
+<body>
+    <!-- 开屏动画容器 - 模块化版本 -->
+    <div class="splash-screen" id="splashScreen">
+        <!-- Stage 0: 网格/波点背景 -->
+        <div class="background-pattern"></div>
+
+        <!-- Stage 1: 小怪兽区域 -->
+        <div class="monster-container">
+            <img src="Monster.png" alt="Monster Mascot" class="monster-image" id="monsterImage">
+        </div>
+
+        <!-- Stage 2: Logo文字区域 -->
+        <div class="logo-text-container" id="logoTextContainer">
+            <img src="Wordhunter.png" alt="Word Hunter Logo" class="logo-text-image" id="logoTextImage">
+            <p class="tagline">Gotta Catch 'Em Words!</p>
+        </div>
+
+        <!-- Stage 3: 按钮区域 -->
+        <div class="button-container" id="buttonContainer">
+            <button class="start-hunt-btn" id="startHuntBtn">
+                <span class="btn-text">START HUNTING</span>
+                <svg class="camera-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- 加载进度条 -->
+        <div class="loading-progress" id="loadingProgress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <p class="progress-text" id="progressText">Loading... 0%</p>
+        </div>
+
+        <!-- 跳过提示 -->
+        <div class="skip-hint" id="skipHint">Click to skip</div>
+
+        <!-- 相机快门转场遮罩 -->
+        <div class="shutter-overlay" id="shutterOverlay">
+            <div class="shutter-ring"></div>
+        </div>
+    </div>
+
+    <!-- 使用模块化的JavaScript -->
+    <script type="module">
+        import { SplashScreen } from './src/splash/SplashScreen.js';
+
+        // 创建开屏动画实例
+        const splash = new SplashScreen({
+            // 自定义配置（可选）
+            paths: {
+                assetsPath: './',
+                monsterImage: 'Monster.png',
+                logoImage: 'Wordhunter.png'
+            },
+            features: {
+                allowSkip: true,
+                showProgress: true,
+                autoStart: true
+            },
+            // 完成回调
+            onComplete: () => {
+                console.log('✅ 开屏动画完成！');
+                // 在实际项目中，这里应该跳转到游戏主界面
+                // 例如：window.location.href = 'game.html';
+                // 或者：startGame();
+                
+                // 演示：显示提示
+                setTimeout(() => {
+                    alert('开屏动画完成！\n\n在实际项目中，这里会启动主游戏。');
+                }, 100);
+            },
+            // 进度回调（可选）
+            onProgress: (percent) => {
+                console.log(`加载进度: ${percent}%`);
+            },
+            // 跳过回调（可选）
+            onSkip: () => {
+                console.log('⏭️ 用户跳过了动画');
+            },
+            // 错误回调（可选）
+            onError: (error) => {
+                console.error('❌ 开屏动画错误:', error);
+            }
+        });
+
+        // 初始化并启动
+        splash.init();
+
+        // 模拟游戏资源加载进度（仅用于演示）
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+            progress += Math.random() * 15;
+            if (progress >= 100) {
+                progress = 100;
+                clearInterval(progressInterval);
+            }
+            splash.updateProgress(progress);
+        }, 200);
+    </script>
+</body>
+</html>

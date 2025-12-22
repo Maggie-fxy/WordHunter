@@ -1,0 +1,481 @@
+/* 全局样式重置 - 移动端优先 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    background-color: #FFFDF5;
+    color: #2D2D2D;
+    min-height: 100vh;
+    min-height: 100dvh;
+    width: 100vw;
+    overflow-x: hidden;
+    overflow-y: auto;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem 1.25rem;
+    padding: calc(1.5rem + env(safe-area-inset-top)) calc(1.25rem + env(safe-area-inset-right)) calc(1.5rem + env(safe-area-inset-bottom)) calc(1.25rem + env(safe-area-inset-left));
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    gap: 0; /* 移除默认gap，手动控制间距 */
+}
+
+/* Stage 0: 网格/波点背景 */
+.background-pattern {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.1;
+    pointer-events: none;
+    z-index: 0;
+    background-image: radial-gradient(#2D2D2D 2px, transparent 2px);
+    background-size: 30px 30px;
+}
+
+/* 背景装饰块 - 营造怪兽被藏在后面的效果 */
+.background-pattern::before,
+.background-pattern::after {
+    content: '';
+    position: absolute;
+    background: linear-gradient(135deg, #FFB3BA 0%, #FFDFBA 100%);
+    border: 3px solid #2D2D2D;
+    border-radius: 0.5rem;
+    box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.2);
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.background-pattern::before {
+    width: 4rem;
+    height: 4rem;
+    top: 28%;
+    left: 15%; /* 更靠近中心 */
+    z-index: 7; /* 在怪兽前面，挡住一部分 */
+    animation: floatDecorative 8s ease-in-out infinite;
+}
+
+.background-pattern::after {
+    width: 3.5rem;
+    height: 3.5rem;
+    top: 32%;
+    right: 18%; /* 更靠近中心 */
+    z-index: 7; /* 在怪兽前面，挡住一部分 */
+    animation: floatDecorative 9s ease-in-out infinite 1s;
+}
+
+@keyframes floatDecorative {
+    0%, 100% {
+        transform: translateY(0) rotate(0deg);
+    }
+    50% {
+        transform: translateY(-15px) rotate(5deg);
+    }
+}
+
+/* Stage 1: 小怪兽区域 - 丝滑淡入上浮动画 */
+.monster-container {
+    position: relative;
+    z-index: 6; /* 在装饰块和文字后面，营造被遮挡效果 */
+    width: 12rem; /* 192px */
+    height: 12rem; /* 192px */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: -6rem; /* 增加负值，让怪兽向下移动更多，实现更明显的重叠 */
+    /* 初始状态：隐藏在下方 */
+    opacity: 0;
+    transform: translateY(30px);
+    /* Stage 1 动画：丝滑淡入上浮，参考文字动画但方向相反 */
+    animation: monsterFadeIn 1s ease-out forwards;
+}
+
+@keyframes monsterFadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.monster-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(4px 4px 0px rgba(0, 0, 0, 1));
+    display: block;
+}
+
+/* Stage 2: Logo文字区域 - 浮现动画 */
+.logo-text-container {
+    position: relative;
+    z-index: 10; /* 在怪兽前面，确保文字显示在怪兽上方 */
+    text-align: center;
+    margin-top: -2rem; /* 负值让文字向上延伸，与怪兽重叠 */
+    margin-bottom: 2rem; /* 减少间距，让按钮更居中 */
+    /* 初始状态：隐藏在上方 */
+    opacity: 0;
+    transform: translateY(-20px);
+    /* Stage 2 动画：延迟1.2s后浮现，持续1s，更丝滑 */
+    animation: textFadeIn 1s ease-out 1.2s forwards;
+}
+
+@keyframes textFadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.logo-text-image {
+    max-width: 18rem; /* 288px */
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+    filter: drop-shadow(3px 3px 0px #E57373);
+}
+
+.tagline {
+    margin-top: 0.5rem;
+    font-size: 1rem; /* 16px */
+    font-weight: 700;
+    color: #666;
+    letter-spacing: 0.5px;
+}
+
+/* Stage 3: 按钮区域 - 从底部冲击动画 */
+.button-container {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 18.75rem; /* 300px */
+    margin-top: 1rem; /* 添加顶部间距，让按钮更居中 */
+    /* 初始状态：隐藏在底部 */
+    opacity: 0;
+    transform: translateY(100px);
+    /* Stage 3 动画：延迟2.5s后冲击上来，持续1s，更丝滑 */
+    animation: buttonSlideUp 1s cubic-bezier(0.34, 1.56, 0.64, 1) 2.5s forwards;
+}
+
+@keyframes buttonSlideUp {
+    0% {
+        opacity: 0;
+        transform: translateY(100px);
+    }
+    60% {
+        transform: translateY(-15px);
+    }
+    75% {
+        transform: translateY(8px);
+    }
+    90% {
+        transform: translateY(-3px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.start-hunt-btn {
+    width: 100%;
+    background-color: #E57373;
+    color: white;
+    border: 4px solid #2D2D2D;
+    border-radius: 1.25rem; /* 20px */
+    padding: 1rem 2rem; /* 16px 32px */
+    font-size: 1.125rem; /* 18px */
+    font-weight: 900;
+    font-style: italic;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    box-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 1);
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem; /* 8px */
+    position: relative;
+    overflow: hidden;
+    min-height: 3.5rem; /* 56px */
+    -webkit-user-select: none;
+    user-select: none;
+    text-transform: uppercase;
+}
+
+.start-hunt-btn:active {
+    transform: translate(6px, 6px);
+    box-shadow: 0px 0px 0px 0px rgba(0, 0, 0, 1);
+}
+
+.btn-text {
+    white-space: nowrap;
+}
+
+.camera-icon {
+    width: 1.5rem; /* 24px */
+    height: 1.5rem; /* 24px */
+    flex-shrink: 0;
+}
+
+/* 相机快门转场遮罩 */
+.shutter-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    background-color: transparent;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.1s ease;
+    overflow: hidden;
+}
+
+.shutter-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.shutter-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background-color: #000;
+    animation: shutterClose 0.8s ease-in-out forwards;
+    opacity: 0;
+}
+
+.shutter-overlay.active .shutter-ring {
+    opacity: 1;
+}
+
+@keyframes shutterClose {
+    0% {
+        width: 0;
+        height: 0;
+        transform: translate(-50%, -50%) scale(0);
+    }
+    100% {
+        width: 200vmax;
+        height: 200vmax;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+/* 小屏幕设备优化 (iPhone SE等) */
+@media (max-width: 375px) {
+    .monster-container {
+        width: 10rem; /* 160px */
+        height: 10rem; /* 160px */
+        margin-bottom: -5rem; /* 增加重叠效果 */
+    }
+    
+    .logo-text-image {
+        max-width: 16rem; /* 256px */
+    }
+    
+    .logo-text-container {
+        margin-top: -1.5rem; /* 保持重叠效果 */
+        margin-bottom: 1.5rem;
+    }
+    
+    .tagline {
+        font-size: 0.9375rem; /* 15px */
+    }
+    
+    .start-hunt-btn {
+        font-size: 1rem; /* 16px */
+        padding: 0.875rem 1.75rem; /* 14px 28px */
+    }
+    
+    .button-container {
+        max-width: 17.5rem; /* 280px */
+        margin-top: 0.5rem;
+    }
+    
+    .background-pattern::before {
+        width: 3.5rem;
+        height: 3.5rem;
+        top: 25%;
+        left: 12%; /* 更靠近中心 */
+    }
+    
+    .background-pattern::after {
+        width: 3rem;
+        height: 3rem;
+        top: 30%;
+        right: 15%; /* 更靠近中心 */
+    }
+}
+
+/* 大屏移动设备优化 (iPhone Pro Max等) */
+@media (min-width: 430px) {
+    .monster-container {
+        width: 14rem; /* 224px */
+        height: 14rem; /* 224px */
+        margin-bottom: -7rem; /* 增加重叠效果 */
+    }
+    
+    .logo-text-image {
+        max-width: 20rem; /* 320px */
+    }
+    
+    .logo-text-container {
+        margin-top: -2.5rem; /* 保持重叠效果 */
+        margin-bottom: 2.5rem;
+    }
+    
+    .tagline {
+        font-size: 1.125rem; /* 18px */
+    }
+    
+    .start-hunt-btn {
+        font-size: 1.25rem; /* 20px */
+        padding: 1.125rem 2.25rem; /* 18px 36px */
+    }
+    
+    .button-container {
+        max-width: 20rem; /* 320px */
+        margin-top: 1.5rem;
+    }
+    
+    .background-pattern::before {
+        width: 4.5rem;
+        height: 4.5rem;
+        top: 30%;
+        left: 18%; /* 更靠近中心 */
+    }
+    
+    .background-pattern::after {
+        width: 4rem;
+        height: 4rem;
+        top: 34%;
+        right: 20%; /* 更靠近中心 */
+    }
+}
+
+/* 横屏适配 */
+@media (orientation: landscape) and (max-height: 600px) {
+    body {
+        padding: 1rem 1.25rem;
+        padding: calc(1rem + env(safe-area-inset-top)) calc(1.25rem + env(safe-area-inset-right)) calc(1rem + env(safe-area-inset-bottom)) calc(1.25rem + env(safe-area-inset-left));
+    }
+    
+    .monster-container {
+        width: 8rem; /* 128px */
+        height: 8rem; /* 128px */
+        margin-bottom: -4.5rem; /* 增加重叠效果 */
+    }
+    
+    .logo-text-container {
+        margin-top: -1.5rem; /* 保持重叠效果 */
+        margin-bottom: 1rem;
+    }
+    
+    .logo-text-image {
+        max-width: 14rem; /* 224px */
+    }
+    
+    .tagline {
+        font-size: 0.875rem; /* 14px */
+        margin-top: 0.25rem;
+    }
+    
+    .button-container {
+        max-width: 16rem; /* 256px */
+        margin-top: 0.5rem;
+    }
+    
+    .start-hunt-btn {
+        padding: 0.875rem 2rem; /* 14px 32px */
+        font-size: 1rem; /* 16px */
+        min-height: 3rem; /* 48px */
+    }
+    
+    .background-pattern::before {
+        width: 3rem;
+        height: 3rem;
+        top: 23%;
+        left: 10%; /* 更靠近中心 */
+    }
+    
+    .background-pattern::after {
+        width: 2.5rem;
+        height: 2.5rem;
+        top: 28%;
+        right: 12%; /* 更靠近中心 */
+    }
+}
+
+/* 超小屏幕设备 (非常小的Android设备) */
+@media (max-width: 320px) {
+    .monster-container {
+        width: 9rem; /* 144px */
+        height: 9rem; /* 144px */
+    }
+    
+    .logo-text-image {
+        max-width: 14rem; /* 224px */
+    }
+    
+    .start-hunt-btn {
+        font-size: 0.9375rem; /* 15px */
+        padding: 0.75rem 1.5rem; /* 12px 24px */
+    }
+    
+    .button-container {
+        max-width: 16rem; /* 256px */
+    }
+}
+
+/* 图片加载失败时的备用显示 */
+.monster-fallback {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    filter: drop-shadow(4px 4px 0px rgba(0, 0, 0, 1));
+}
+
+.logo-text-fallback {
+    white-space: pre-line;
+    text-align: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* 高DPI屏幕优化 */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .background-pattern {
+        background-size: 25px 25px;
+    }
+}

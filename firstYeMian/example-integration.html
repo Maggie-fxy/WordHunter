@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#FFFDF5">
+    <title>游戏集成示例 - Word Hunter</title>
+    <link rel="stylesheet" href="src/splash/splash.css">
+    <style>
+        /* 主游戏界面样式 */
+        .game-container {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            padding: 2rem;
+            box-sizing: border-box;
+        }
+
+        .game-container.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .game-title {
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: 2rem;
+            text-shadow: 3px 3px 0px rgba(0, 0, 0, 0.3);
+        }
+
+        .game-info {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 1rem;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        .game-info h2 {
+            margin-bottom: 1rem;
+        }
+
+        .game-info p {
+            line-height: 1.6;
+            margin-bottom: 0.5rem;
+        }
+
+        .restart-btn {
+            margin-top: 2rem;
+            padding: 1rem 2rem;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1.125rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .restart-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .restart-btn:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+    <!-- 开屏动画容器 -->
+    <div class="splash-screen" id="splashScreen">
+        <div class="background-pattern"></div>
+
+        <div class="monster-container">
+            <img src="Monster.png" alt="Monster Mascot" class="monster-image" id="monsterImage">
+        </div>
+
+        <div class="logo-text-container" id="logoTextContainer">
+            <img src="Wordhunter.png" alt="Word Hunter Logo" class="logo-text-image" id="logoTextImage">
+            <p class="tagline">Gotta Catch 'Em Words!</p>
+        </div>
+
+        <div class="button-container" id="buttonContainer">
+            <button class="start-hunt-btn" id="startHuntBtn">
+                <span class="btn-text">START HUNTING</span>
+                <svg class="camera-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+                </svg>
+            </button>
+        </div>
+
+        <div class="loading-progress" id="loadingProgress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <p class="progress-text" id="progressText">Loading... 0%</p>
+        </div>
+
+        <div class="skip-hint" id="skipHint">Click to skip</div>
+
+        <div class="shutter-overlay" id="shutterOverlay">
+            <div class="shutter-ring"></div>
+        </div>
+    </div>
+
+    <!-- 主游戏界面 -->
+    <div class="game-container" id="gameContainer">
+        <h1 class="game-title">🎮 WORD HUNTER</h1>
+        <div class="game-info">
+            <h2>✅ 游戏加载完成！</h2>
+            <p>这是主游戏界面的示例。</p>
+            <p>开屏动画已成功集成并完成。</p>
+            <p>在实际项目中，这里会是你的游戏主界面。</p>
+            <button class="restart-btn" onclick="restartSplash()">🔄 重新播放开屏动画</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { SplashScreen } from './src/splash/SplashScreen.js';
+
+        let splashInstance = null;
+
+        // 模拟游戏资源加载
+        function simulateGameLoading(splash) {
+            return new Promise((resolve) => {
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += Math.random() * 15;
+                    if (progress >= 100) {
+                        progress = 100;
+                        clearInterval(interval);
+                        resolve();
+                    }
+                    splash.updateProgress(progress);
+                }, 200);
+            });
+        }
+
+        // 启动游戏
+        function startGame() {
+            console.log('🎮 启动主游戏...');
+            
+            // 隐藏开屏动画容器
+            const splashScreen = document.getElementById('splashScreen');
+            if (splashScreen) {
+                splashScreen.style.display = 'none';
+            }
+            
+            // 显示游戏界面
+            const gameContainer = document.getElementById('gameContainer');
+            if (gameContainer) {
+                gameContainer.classList.add('active');
+            }
+        }
+
+        // 初始化开屏动画
+        async function initSplash() {
+            splashInstance = new SplashScreen({
+                // 配置选项
+                paths: {
+                    assetsPath: './',
+                    monsterImage: 'Monster.png',
+                    logoImage: 'Wordhunter.png'
+                },
+                features: {
+                    allowSkip: true,
+                    showProgress: true,
+                    autoStart: false  // 手动控制启动
+                },
+                timing: {
+                    minDisplayTime: 2000,
+                    skipEnableDelay: 1000
+                },
+                // 回调函数
+                onComplete: () => {
+                    console.log('✅ 开屏动画完成');
+                    startGame();
+                },
+                onProgress: (percent) => {
+                    console.log(`📊 加载进度: ${percent}%`);
+                },
+                onSkip: () => {
+                    console.log('⏭️ 用户跳过动画');
+                },
+                onError: (error) => {
+                    console.error('❌ 错误:', error);
+                    // 即使出错也启动游戏
+                    startGame();
+                }
+            });
+
+            // 初始化
+            await splashInstance.init();
+
+            // 模拟游戏资源加载
+            await simulateGameLoading(splashInstance);
+
+            // 启动动画
+            splashInstance.start();
+        }
+
+        // 重新播放开屏动画（用于演示）
+        window.restartSplash = function() {
+            // 隐藏游戏界面
+            const gameContainer = document.getElementById('gameContainer');
+            if (gameContainer) {
+                gameContainer.classList.remove('active');
+            }
+
+            // 显示开屏动画容器
+            const splashScreen = document.getElementById('splashScreen');
+            if (splashScreen) {
+                splashScreen.style.display = 'flex';
+            }
+
+            // 重新初始化
+            initSplash();
+        };
+
+        // 页面加载完成后启动
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 初始化游戏...');
+            initSplash();
+        });
+    </script>
+</body>
+</html>

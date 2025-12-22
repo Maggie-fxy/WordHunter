@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RefreshCw, Lightbulb, Volume2, VolumeX, Music, Mic } from 'lucide-react';
 import { useGame, REMOVE_BG_FLAG } from '@/context/GameContext';
+import { SplashScreen } from '@/components/SplashScreen';
 import { CollectionGrid } from '@/components/CollectionGrid';
 import { CameraView } from '@/components/CameraView';
 import { VictoryModal } from '@/components/VictoryModal';
@@ -48,6 +49,7 @@ export default function HomePage() {
   const [showImageAnimation, setShowImageAnimation] = useState(false); // 显示图片飞入动画
   const [unlockedAchievement, setUnlockedAchievement] = useState<typeof ACHIEVEMENTS[0] | null>(null); // 新解锁的成就
   const [analyzingText, setAnalyzingText] = useState<string>('🔍 豆包AI识别中...');
+  const [showSplash, setShowSplash] = useState(true); // 开屏动画状态
   const prevUserDataRef = useRef(userData); // 用于检测成就变化
   
   const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -164,9 +166,9 @@ export default function HomePage() {
       countdownTimerRef.current = null;
     }
 
-    // 判断是否应该运行倒计时
+    // 判断是否应该运行倒计时（开屏动画期间不运行）
     const isCameraActive = phase === 'CAMERA' || phase === 'ANALYZING' || phase === 'FAILED' || phase === 'SUCCESS';
-    const shouldRun = mode === 'HUNTER' && !isCameraActive && currentWord;
+    const shouldRun = mode === 'HUNTER' && !isCameraActive && currentWord && !showSplash;
 
     if (shouldRun) {
       countdownTimerRef.current = setInterval(() => {
@@ -187,11 +189,11 @@ export default function HomePage() {
         countdownTimerRef.current = null;
       }
     };
-  }, [mode, phase, currentWord, handleSwitchWord]);
+  }, [mode, phase, currentWord, handleSwitchWord, showSplash]);
 
-  // 单词改变时重置倒计时和提示
+  // 单词改变时重置倒计时和提示（开屏动画期间不启动）
   useEffect(() => {
-    if (currentWord && mode === 'HUNTER') {
+    if (currentWord && mode === 'HUNTER' && !showSplash) {
       setCountdown(60);
       setHintLevel(0);
       setHintButtonFlashing(false);
@@ -215,7 +217,17 @@ export default function HomePage() {
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
       if (idleTimer2Ref.current) clearTimeout(idleTimer2Ref.current);
     };
-  }, [currentWord?.id, mode]);
+  }, [currentWord?.id, mode, showSplash]);
+
+  // 开屏动画完成回调
+  const handleSplashComplete = useCallback(() => {
+    setShowSplash(false);
+  }, []);
+
+  // 显示开屏动画
+  if (showSplash) {
+    return <SplashScreen onComplete={handleSplashComplete} />;
+  }
 
   // 根据模式渲染不同页面
   if (mode === 'REVIEW') {
