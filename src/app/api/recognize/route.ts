@@ -14,7 +14,6 @@ const DOUBAO_MODEL_NAME = 'doubao-seed-1-6-lite-251015';
 
 // Gemini API 配置
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
-const GEMINI_API_KEY = 'AIzaSyBN7Gr-iAzRp1dCjGvnmTIEhnwlhHRWZcw';
 
 interface RecognizeRequest {
   imageBase64: string;
@@ -164,6 +163,12 @@ JSON 结构:
 async function callGeminiAPI(imageBase64: string, targetWord: string, targetWordCn: string): Promise<AIRecognitionResult> {
   const startTime = Date.now();
   
+  // 获取 Gemini API Key
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error('GEMINI_API_KEY 未配置，请在环境变量中设置');
+  }
+  
   // 移除 base64 前缀
   const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
   
@@ -187,7 +192,7 @@ JSON 结构:
 - feedback: 如果 is_match 为 false，用幽默语气告诉孩子你看到了什么(15字内)。如果 is_match 为 true，留空字符串。`;
 
   // 调用 Gemini API
-  const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+  const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
