@@ -504,8 +504,8 @@ export default function HomePage() {
     }
   };
 
-  // SUCCESS 状态时不显示相机，显示收集栏让用户看到图片已添加
-  const isCameraActive = phase === 'CAMERA' || phase === 'ANALYZING' || phase === 'FAILED';
+  // SUCCESS 状态时也保持相机视图，让用户看到成功反馈覆盖层
+  const isCameraActive = phase === 'CAMERA' || phase === 'ANALYZING' || phase === 'FAILED' || phase === 'SUCCESS';
 
   // 开始相机
   const handleStartCamera = () => {
@@ -677,46 +677,28 @@ export default function HomePage() {
             <div className="h-full flex flex-col">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-black text-[#5D4037]">
-                  {phase === 'SUCCESS' ? '🎉 收集成功！' : '📦 收集进度'}
+                  📦 收集进度
                 </h3>
                 <span className="text-sm font-black text-[#FF5252]">{collectedImages.length}/6</span>
               </div>
               
               {/* 收集框 */}
               <div className="mb-4">
-                <CollectionGrid images={collectedImages} highlightLast={phase === 'SUCCESS'} />
+                <CollectionGrid images={collectedImages} highlightLast={false} />
               </div>
               
               {/* START HUNTING 按钮 - 2.5D风格 */}
-              {phase !== 'SUCCESS' && (
-                <div className="flex-1 flex items-center justify-center">
-                  <motion.button
-                    whileHover={{ scale: 1.05, rotate: 3 }}
-                    whileTap={{ scale: 0.95, y: 10 }}
-                    onClick={handleStartCamera}
-                    disabled={!currentWord}
-                    className="btn-3d-lg w-40 h-40 rounded-full bg-[#FF5252] border-[#B71C1C] text-white font-black flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <span className="text-xl font-black tracking-wide drop-shadow-md">START<br/>HUNTING</span>
-                  </motion.button>
-                </div>
-              )}
-              
-              {/* 拍照成功提示 */}
-              {phase === 'SUCCESS' && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8, y: 20 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  className="flex-1 flex flex-col items-center justify-center"
+              <div className="flex-1 flex items-center justify-center">
+                <motion.button
+                  whileHover={{ scale: 1.05, rotate: 3 }}
+                  whileTap={{ scale: 0.95, y: 10 }}
+                  onClick={handleStartCamera}
+                  disabled={!currentWord}
+                  className="btn-3d-lg w-40 h-40 rounded-full bg-[#FF5252] border-[#B71C1C] text-white font-black flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <div className="bg-[#66BB6A] rounded-3xl border-4 border-[#2E7D32] border-b-8 px-8 py-6 text-center">
-                    <p className="text-3xl mb-2">🎉</p>
-                    <p className="text-xl font-black text-white drop-shadow-md">太棒了！</p>
-                    <p className="text-sm font-bold text-white/90 mt-1">+1 💎 钻石碎片</p>
-                    <p className="text-xs text-white/70 mt-2">即将进入下一个单词...</p>
-                  </div>
-                </motion.div>
-              )}
+                  <span className="text-xl font-black tracking-wide drop-shadow-md">START<br/>HUNTING</span>
+                </motion.button>
+              </div>
             </div>
           )}
         </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, X, Keyboard, ArrowLeft, Lightbulb } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -347,7 +347,7 @@ export function ReviewMode({ onBack }: ReviewModeProps) {
   }
 
   return (
-    <div className="h-screen grass-bg flex flex-col overflow-hidden">
+    <div className="min-h-screen grass-bg flex flex-col" style={{ minHeight: '100dvh' }}>
       {/* 顶部导航 */}
       <header className="flex items-center justify-between px-4 py-3 wood-bg border-b-4 border-[#5D4037]">
         <motion.button
@@ -364,8 +364,8 @@ export function ReviewMode({ onBack }: ReviewModeProps) {
         <div className="w-10" />
       </header>
 
-      {/* 主内容区 */}
-      <div className="flex-1 flex flex-col p-4 overflow-hidden">
+      {/* 主内容区 - 支持滚动以适配移动端键盘 */}
+      <div className="flex-1 flex flex-col p-4 overflow-y-auto pb-24">
         {reviewWord && (
           <>
             {/* 图片展示区 - 占1/2 */}
@@ -526,6 +526,12 @@ export function ReviewMode({ onBack }: ReviewModeProps) {
                       value={spellingInput}
                       onChange={(e) => setSpellingInput(e.target.value.toUpperCase())}
                       onKeyDown={(e) => e.key === 'Enter' && handleSpellingSubmit()}
+                      onFocus={(e) => {
+                        // 移动端键盘弹出时，滚动输入框到可见区域
+                        setTimeout(() => {
+                          e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 300);
+                      }}
                       placeholder="输入英文单词..."
                       className={`flex-1 p-4 rounded-2xl border-4 font-black text-xl text-center bg-white focus:outline-none ${
                         showWrongHint ? 'border-[#FF5252] animate-wiggle' : 'border-[#5D4037]'
