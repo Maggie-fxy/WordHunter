@@ -1,41 +1,52 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 import { BgmProvider, useBgm } from '@/hooks/useBgm';
 
-function BgmIframe() {
+function BgmPlayer() {
   const { isPlaying } = useBgm();
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // 只在生产环境（HTTPS）启用网易云 BGM，本地开发时禁用避免跨域问题
-  const isProduction = typeof window !== 'undefined' && window.location.protocol === 'https:';
+  useEffect(() => {
+    // 创建 Audio 实例
+    if (!audioRef.current) {
+      audioRef.current = new Audio('/bgm.mp3');
+      audioRef.current.loop = true;
+      audioRef.current.volume = 0.5;
+    }
 
-  // isPlaying 控制 iframe 是否渲染
-  // 全局 Context 确保切换栏目时状态不变
-  if (!isPlaying || !isProduction) return null;
+    const audio = audioRef.current;
 
-  return (
-    <div
-      className="fixed z-[-1] opacity-0 pointer-events-none"
-      style={{ width: 1, height: 1, left: -9999, top: -9999 }}
-    >
-      <iframe
-        frameBorder="no"
-        marginWidth={0}
-        marginHeight={0}
-        width={1}
-        height={1}
-        allow="autoplay; encrypted-media; accelerometer; gyroscope"
-        referrerPolicy="no-referrer-when-downgrade"
-        src="https://music.163.com/outchain/player?type=2&id=2075140388&auto=1&height=66"
-      />
-    </div>
-  );
+    if (isPlaying) {
+      audio.play().catch(e => {
+        console.log('BGM autoplay blocked:', e);
+      });
+    } else {
+      audio.pause();
+    }
+
+    return () => {
+      // 组件卸载时不销毁 audio，保持播放
+    };
+  }, [isPlaying]);
+
+  // 组件卸载时清理
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
+  return null;
 }
 
 export function BgmHost({ children }: { children: ReactNode }) {
   return (
     <BgmProvider>
-      <BgmIframe />
+      <BgmPlayer />
       {children}
     </BgmProvider>
   );
