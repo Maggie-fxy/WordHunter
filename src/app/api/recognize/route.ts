@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// ==================== API 切换开关 ====================
+// 0 = 豆包API, 1 = Gemini API
+const API_PROVIDER = 1;
+// =====================================================
+
 // 豆包视觉模型 API 配置 - Doubao-Seed-1.6-lite
 const DOUBAO_API_URL = 'https://ark.cn-beijing.volces.com/api/v3/chat/completions';
 // 推理接入点
 const DOUBAO_ENDPOINT_ID = 'ep-20251105144941-hxmgb';
 // 模型名称
 const DOUBAO_MODEL_NAME = 'doubao-seed-1-6-lite-251015';
+
+// Gemini API 配置
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+const GEMINI_API_KEY = 'AIzaSyBN7Gr-iAzRp1dCjGvnmTIEhnwlhHRWZcw';
 
 interface RecognizeRequest {
   imageBase64: string;
@@ -36,6 +45,15 @@ export async function POST(request: NextRequest) {
     const apiKey = process.env.DOUBAO_API_KEY || 'f1df8cb2-c16c-4b6b-a673-c919175a10fb';
     const modelId = process.env.DOUBAO_MODEL_ID || DOUBAO_MODEL_NAME;
 
+    // 根据开关选择 API
+    if (API_PROVIDER === 1) {
+      // 使用 Gemini API
+      console.log('🤖 Gemini AI识别中...');
+      const result = await callGeminiAPI(imageBase64, targetWord, targetWordCn);
+      return NextResponse.json(result);
+    }
+
+    // 使用豆包 API
     console.log('🤖 豆包AI识别中...');
 
     if (!apiKey) {
@@ -140,6 +158,96 @@ JSON 结构:
       { status: 500 }
     );
   }
+}
+
+// Gemini API 调用函数
+async function callGeminiAPI(imageBase64: string, targetWord: string, targetWordCn: string): Promise<AIRecognitionResult> {
+  const startTime = Date.now();
+  
+  // 移除 base64 前缀
+  const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+  
+  // 构建 Prompt（与豆包相同的逻辑）
+  const prompt = `你是一个儿童英语寻宝游戏的裁判。
+1. 请识别图片中的核心物体。
+2. 判断该物体是否属于单词: "${targetWord}" (${targetWordCn}) 的范畴。（例如 target 是 CUP，那么马克杯、玻璃杯、纸杯都算 true）。
+3. 返回严格的 JSON 格式，不要 Markdown。
+
+JSON 结构:
+{
+  "is_match": boolean,
+  "detected_object_en": "string",
+  "detected_object_cn": "string", 
+  "feedback": "string"
+}
+
+注意：
+- detected_object_en: 你看到的物体英文名
+- detected_object_cn: 中文名
+- feedback: 如果 is_match 为 false，用幽默语气告诉孩子你看到了什么(15字内)。如果 is_match 为 true，留空字符串。`;
+
+  // 调用 Gemini API
+  const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      contents: [
+        {
+          parts: [
+            {
+              inline_data: {
+                mime_type: 'image/jpeg',
+                data: base64Data,
+              },
+            },
+            {
+              text: prompt,
+            },
+          ],
+        },
+      ],
+      generationConfig: {
+        temperature: 0.1,
+        maxOutputTokens: 500,
+      },
+    }),
+  });
+
+  const elapsed = Date.now() - startTime;
+  console.log(`⏱️ Gemini API 响应时间: ${elapsed}ms`);
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Gemini API 错误:', errorText);
+    throw new Error(`Gemini API 调用失败: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+  if (!content) {
+    throw new Error('Gemini API 返回内容为空');
+  }
+
+  // 解析 JSON 响应
+  let result: AIRecognitionResult;
+  try {
+    // 尝试直接解析
+    result = JSON.parse(content);
+  } catch {
+    // 尝试从文本中提取 JSON
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      result = JSON.parse(jsonMatch[0]);
+    } else {
+      console.error('Gemini 原始响应:', content);
+      throw new Error('无法解析 Gemini AI 响应');
+    }
+  }
+
+  return result;
 }
 
 // 开发模式模拟结果
