@@ -115,9 +115,6 @@ export function SplashScreen({ onComplete, onSkip }: SplashScreenProps) {
         transition: 'opacity 0.4s ease-out'
       }}
     >
-      {/* 背景图案 */}
-      <div className="background-pattern"></div>
-
       {/* 怪兽 */}
       <div className="monster-container">
         <img 

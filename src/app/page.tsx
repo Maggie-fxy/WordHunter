@@ -163,10 +163,10 @@ export default function HomePage() {
     }, 300);
   }, [nextWord, playSwitch]);
 
-  // 识别成功后自动跳转下一个单词 - 停留4秒让用户看到图片在框里
+  // 识别成功后自动跳转下一个单词 - 从图片动画开始后计时，确保用户看到完整动画
   useEffect(() => {
-    if (phase === 'SUCCESS' && mode === 'HUNTER') {
-      // 4秒后自动跳转到下一个单词
+    if (showImageAnimation && mode === 'HUNTER') {
+      // 4秒后自动跳转到下一个单词（从动画开始计时）
       const timer = setTimeout(() => {
         // 直接调用换词逻辑，避免循环依赖
         setIsCardSwitching(true);
@@ -183,7 +183,7 @@ export default function HomePage() {
       }, 4000);
       return () => clearTimeout(timer);
     }
-  }, [phase, nextWord, mode]);
+  }, [showImageAnimation, nextWord, mode]);
 
   // 统一的倒计时管理 - 解决竞态条件
   useEffect(() => {
@@ -740,7 +740,8 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* 底部倒计时进度条 - 左红右绿，丝滑动画 */}
+      {/* 底部倒计时进度条 - 相机模式下隐藏，避免与拍照按钮重叠 */}
+      {!isCameraActive && (
       <div className="fixed bottom-28 left-0 right-0 px-4 z-30">
         {/* 倒计时秒数显示在进度条上方 */}
         <div className="flex items-center justify-center mb-1">
@@ -772,6 +773,7 @@ export default function HomePage() {
           />
         </motion.div>
       </div>
+      )}
 
       {/* 底部导航栏 */}
       <BottomNav currentMode={mode} onModeChange={handleModeChange} />
