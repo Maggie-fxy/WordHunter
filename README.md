@@ -5,6 +5,7 @@
 ## 🌐 在线体验
 
 **📱 手机端访问体验地址：https://wordshunter.online**
+**📱 项目演示视频地址：https://www.bilibili.com/video/BV1UMBMBYERa/?share_source=copy_web&vd_source=5de3376c43bbb7a4a186e028daee93be**
 
 > 推荐使用手机浏览器访问，获得最佳拍照体验
 
