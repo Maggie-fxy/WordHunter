@@ -357,9 +357,29 @@ export default function HomePage() {
         setAnalyzingText('🎉 找到了！太棒了！');
         await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // 根据标志位决定是否抠图
+        // 根据标志位决定抠图方式：0=Gemini, 1=PHOTOROOM, 2=不抠图
         let finalImageUrl = imageData;
-        if (REMOVE_BG_FLAG === 1) {
+        if (REMOVE_BG_FLAG === 0) {
+          // Gemini 抠图（通过 OpenRouter）
+          try {
+            setAnalyzingText('✨ Gemini 正在制作专属贴纸...');
+            const removeBgResponse = await fetch('/api/removebg-gemini', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ imageBase64: imageData }),
+            });
+            const removeBgResult = await removeBgResponse.json();
+            if (removeBgResult.success && removeBgResult.imageUrl) {
+              finalImageUrl = removeBgResult.imageUrl;
+              console.log('Gemini 抠图成功');
+            } else {
+              console.log('Gemini 抠图失败，使用原图:', removeBgResult.error);
+            }
+          } catch (e) {
+            console.log('Gemini 抠图请求失败，使用原图:', e);
+          }
+        } else if (REMOVE_BG_FLAG === 1) {
+          // PHOTOROOM 抠图
           try {
             setAnalyzingText('✨ 正在制作专属贴纸...');
             const removeBgResponse = await fetch('/api/removebg', {
@@ -370,12 +390,12 @@ export default function HomePage() {
             const removeBgResult = await removeBgResponse.json();
             if (removeBgResult.success && removeBgResult.imageUrl) {
               finalImageUrl = removeBgResult.imageUrl;
-              console.log('抠图成功，剩余配额:', removeBgResult.remainingCredits);
+              console.log('PHOTOROOM 抠图成功，剩余配额:', removeBgResult.remainingCredits);
             } else {
-              console.log('抠图失败，使用原图:', removeBgResult.error);
+              console.log('PHOTOROOM 抠图失败，使用原图:', removeBgResult.error);
             }
           } catch (e) {
-            console.log('抠图请求失败，使用原图:', e);
+            console.log('PHOTOROOM 抠图请求失败，使用原图:', e);
           }
         } else {
           console.log('抠图开关关闭，使用原图');
@@ -444,9 +464,29 @@ export default function HomePage() {
     dispatch({ type: 'START_ANALYZING' });
     setAnalyzingText('👌 OK！我来帮你收藏！');
     
-    // 根据标志位决定是否抠图
+    // 根据标志位决定抠图方式：0=Gemini, 1=PHOTOROOM, 2=不抠图
     let finalImageUrl = imageData;
-    if (REMOVE_BG_FLAG === 1) {
+    if (REMOVE_BG_FLAG === 0) {
+      // Gemini 抠图（通过 OpenRouter）
+      try {
+        setAnalyzingText('✨ Gemini 正在制作专属贴纸...');
+        const removeBgResponse = await fetch('/api/removebg-gemini', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageBase64: imageData }),
+        });
+        const removeBgResult = await removeBgResponse.json();
+        if (removeBgResult.success && removeBgResult.imageUrl) {
+          finalImageUrl = removeBgResult.imageUrl;
+          console.log('Gemini 抠图成功');
+        } else {
+          console.log('Gemini 抠图失败，使用原图:', removeBgResult.error);
+        }
+      } catch (e) {
+        console.log('Gemini 抠图请求失败，使用原图:', e);
+      }
+    } else if (REMOVE_BG_FLAG === 1) {
+      // PHOTOROOM 抠图
       try {
         setAnalyzingText('✨ 正在制作专属贴纸...');
         const removeBgResponse = await fetch('/api/removebg', {
@@ -457,12 +497,12 @@ export default function HomePage() {
         const removeBgResult = await removeBgResponse.json();
         if (removeBgResult.success && removeBgResult.imageUrl) {
           finalImageUrl = removeBgResult.imageUrl;
-          console.log('抠图成功，剩余配额:', removeBgResult.remainingCredits);
+          console.log('PHOTOROOM 抠图成功，剩余配额:', removeBgResult.remainingCredits);
         } else {
-          console.log('抠图失败，使用原图:', removeBgResult.error);
+          console.log('PHOTOROOM 抠图失败，使用原图:', removeBgResult.error);
         }
       } catch (e) {
-        console.log('抠图请求失败，使用原图:', e);
+        console.log('PHOTOROOM 抠图请求失败，使用原图:', e);
       }
     } else {
       console.log('抠图开关关闭，使用原图');

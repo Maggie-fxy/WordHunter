@@ -42,8 +42,8 @@ const initialState: GameState = {
 // 清除数据开关：1=清除旧数据，0=正常加载
 const CLEAR_DATA_FLAG: number = 0;        //CLEAR_DATA_FLAG = 1 → 清除所有旧数据 CLEAR_DATA_FLAG = 0 → 正常加载数据（当前状态）
 
-// 抠图开关：0=不抠图使用原图，1=调用AI抠图
-export const REMOVE_BG_FLAG: number = 1;  //REMOVE_BG_FLAG = 0 → 使用原图 REMOVE_BG_FLAG = 1 → 进行AI抠图
+// 抠图模式：0=使用Gemini抠图，1=使用PHOTOROOM抠图，2=不抠图使用原图
+export const REMOVE_BG_FLAG: number = 0;  //REMOVE_BG_FLAG = 0 → Gemini抠图(通过OpenRouter) REMOVE_BG_FLAG = 1 → PHOTOROOM抠图 REMOVE_BG_FLAG = 2 → 不抠图使用原图
 
 // 每个单词最多保存的图片数量
 const MAX_IMAGES_PER_WORD = 6;
