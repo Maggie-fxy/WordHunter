@@ -366,7 +366,11 @@ export default function HomePage() {
             const removeBgResponse = await fetch('/api/removebg-gemini', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ imageBase64: imageData }),
+              body: JSON.stringify({
+                imageBase64: imageData,
+                targetWord: currentWord.word,
+                targetWordCn: currentWord.cn,
+              }),
             });
             const removeBgResult = await removeBgResponse.json();
             if (removeBgResult.success && removeBgResult.imageUrl) {
@@ -473,7 +477,11 @@ export default function HomePage() {
         const removeBgResponse = await fetch('/api/removebg-gemini', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageBase64: imageData }),
+          body: JSON.stringify({
+            imageBase64: imageData,
+            targetWord: currentWord.word,
+            targetWordCn: currentWord.cn,
+          }),
         });
         const removeBgResult = await removeBgResponse.json();
         if (removeBgResult.success && removeBgResult.imageUrl) {
@@ -687,7 +695,7 @@ export default function HomePage() {
                 {/* 单词显示 - 一开始不显示中文 */}
                 <div className="text-center py-2">
                   <h2 className="text-4xl font-black text-text tracking-wide">
-                    {currentWord.word}
+                    {currentWord.word.toLowerCase()}
                   </h2>
                 </div>
 

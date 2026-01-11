@@ -437,7 +437,7 @@ export function ReviewMode({ onBack }: ReviewModeProps) {
                         >
                           <span className={`text-xl relative z-10 font-black ${
                             showCorrect || showWrong ? 'text-white drop-shadow-md' : 'text-[#5D4037]'
-                          }`}>{option.word}</span>
+                          }`}>{option.word.toLowerCase()}</span>
                         </motion.button>
                       );
                     })}
@@ -493,11 +493,11 @@ export function ReviewMode({ onBack }: ReviewModeProps) {
                       >
                         <div className="inline-block bg-[#FFF8E1] px-4 py-2 rounded-2xl border-4 border-[#F57C00] border-b-8">
                           <p className="text-sm text-[#5D4037] font-bold">
-                            💡 首字母: <span className="font-black text-[#FF5252]">{reviewWord.word[0].toUpperCase()}</span>
+                            💡 首字母: <span className="font-black text-[#FF5252]">{reviewWord.word[0].toLowerCase()}</span>
                             {hintLevel >= 2 && (
                               <>
                                 {' · '}
-                                末字母: <span className="font-black text-[#FF5252]">{reviewWord.word[reviewWord.word.length - 1].toUpperCase()}</span>
+                                末字母: <span className="font-black text-[#FF5252]">{reviewWord.word[reviewWord.word.length - 1].toLowerCase()}</span>
                               </>
                             )}
                             {' · '}
@@ -573,7 +573,7 @@ export function ReviewMode({ onBack }: ReviewModeProps) {
                     <p className="text-3xl font-black text-[#5D4037]">{isCorrect ? '🎉 正确！' : '😢 错误'}</p>
                     {!isCorrect && (
                       <p className="text-[#1B5E20] mt-2 font-bold">
-                        正确答案: <span className="font-black text-[#FF5252]">{reviewWord.word}</span>
+                        正确答案: <span className="font-black text-[#FF5252]">{reviewWord.word.toLowerCase()}</span>
                       </p>
                     )}
                   </div>

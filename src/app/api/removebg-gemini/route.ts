@@ -5,12 +5,14 @@ const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 interface RemoveBgGeminiRequest {
   imageBase64: string;
+  targetWord?: string;
+  targetWordCn?: string;
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body: RemoveBgGeminiRequest = await request.json();
-    const { imageBase64 } = body;
+    const { imageBase64, targetWord, targetWordCn } = body;
 
     if (!imageBase64) {
       return NextResponse.json(
@@ -58,32 +60,14 @@ export async function POST(request: NextRequest) {
         },
         body: JSON.stringify({
           model: 'google/gemini-2.5-flash-image',
+          modalities: ['image', 'text'],
           messages: [
             {
               role: 'user',
               content: [
                 {
                   type: 'text',
-                  text: `
-Use the uploaded image as input.
-
-Context:
-The sticker should visually represent the meaning of the current word.
-
-Task:
-Remove the background and create a clean sticker that clearly expresses the meaning of the current word using the main subject in the image.
-
-Constraints:
-- The main subject must align with and represent the meaning of the current word
-- Keep the main subject exactly as is
-- Do not change pose, colors, or proportions
-- Do not add new elements
-- Clean and sharp edges, suitable for sticker use
-
-Output:
-- Transparent background
-- PNG format
-`,
+                  text: `Remove background, keep only the ${targetWord ?? 'object'}${targetWordCn ? ` (${targetWordCn})` : ''}, add white outline, output as sticker PNG.`,
                 },
                 {
                   type: 'image_url',
@@ -114,30 +98,31 @@ Output:
 
       const result = await response.json();
       
-      // 检查响应中是否有图片
-      const content = result.choices?.[0]?.message?.content;
+      // 检查响应中的 images 字段（OpenRouter 图像生成的标准格式）
+      const message = result.choices?.[0]?.message;
+      const images = message?.images;
       
-      if (content) {
-        // 尝试从响应中提取 base64 图片
-        // Gemini 可能返回 markdown 格式的图片或直接返回 base64
-        const base64ImageMatch = content.match(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/);
-        
-        if (base64ImageMatch) {
+      if (images && images.length > 0) {
+        const imageUrl = images[0]?.image_url?.url;
+        if (imageUrl) {
           console.log('✅ 贴纸已生成！');
           return NextResponse.json({
             success: true,
-            imageUrl: base64ImageMatch[0],
+            imageUrl: imageUrl,
             isSimulated: false,
           });
         }
-        
-        // 如果响应是纯 base64（没有 data: 前缀）
-        const pureBase64Match = content.match(/^[A-Za-z0-9+/=]{100,}$/);
-        if (pureBase64Match) {
-          console.log('✅ 贴纸已生成！');
+      }
+      
+      // 备用：检查 content 中是否有 base64 图片
+      const content = message?.content;
+      if (content && typeof content === 'string') {
+        const base64ImageMatch = content.match(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/);
+        if (base64ImageMatch) {
+          console.log('✅ 贴纸已生成（从content提取）！');
           return NextResponse.json({
             success: true,
-            imageUrl: `data:image/png;base64,${pureBase64Match[0]}`,
+            imageUrl: base64ImageMatch[0],
             isSimulated: false,
           });
         }
@@ -145,6 +130,7 @@ Output:
 
       // 如果没有找到图片，返回原图
       console.log('⚠️ Gemini 未返回有效图片，使用原图');
+      console.log('📦 响应结构:', JSON.stringify(result, null, 2).substring(0, 300));
       return NextResponse.json({
         success: true,
         imageUrl: imageBase64,

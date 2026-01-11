@@ -84,7 +84,7 @@ function WordDetailModal({ word, record, onClose }: { word: Word; record?: WordR
         {/* 单词标题 */}
         <div className="text-center mb-4">
           <div className="flex items-center justify-center gap-2 mb-1">
-            <h2 className="text-3xl font-black text-[#5D4037]">{word.word}</h2>
+            <h2 className="text-3xl font-black text-[#5D4037]">{word.word.toLowerCase()}</h2>
             <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${rarity.bgColor} ${rarity.color} border ${rarity.borderColor}`}>
               {rarity.label}
             </span>
@@ -216,7 +216,7 @@ function CollectedCard({ word, record, index, onClick }: { word: Word; record: W
       {/* 单词 - 自动缩小字体以适应长单词 */}
       <div className="relative z-10 text-center px-0.5 w-full">
         <p className={`font-black text-[#5D4037] leading-tight ${word.word.length > 8 ? 'text-[8px]' : word.word.length > 6 ? 'text-[10px]' : 'text-xs'}`}>
-          {word.word.length > 12 ? word.word.substring(0, 11) + '..' : word.word}
+          {word.word.length > 12 ? word.word.substring(0, 11).toLowerCase() + '..' : word.word.toLowerCase()}
         </p>
         <p className="text-[9px] text-[#1B5E20] font-bold truncate">{word.cn}</p>
       </div>
