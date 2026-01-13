@@ -331,3 +331,85 @@ const applyZoomToTrack = async (track, zoomValue) => {
 3. 截图一致性：UI 显示与 captureImage 输出一致
 4. 双指捏合：确认不被浏览器劫持
 5. 滑杆控制：确认与捏合使用同一状态源
+
+---
+
+## 📱 Android 原生相机架构 (进阶方案)
+
+> **设计哲学**: Web 是皮肤，Native 是肌肉，真倍率必须由原生控制
+
+### 为什么需要原生相机？
+
+Web `getUserMedia` 的局限性：
+- ❌ 无法访问物理多摄像头（超广角/长焦）
+- ❌ `applyConstraints({ zoom })` 在很多 WebView 中无效
+- ❌ 无法实现真实 0.5x / 2x / 3x 物理倍率
+
+### 架构概览
+
+```
+React Camera UI (按钮/滑杆/倍率显示)
+        │
+        │ JS Bridge (window.AndroidCamera)
+        ▼
+Android WebView + JavascriptInterface
+        │
+        │ CameraBridge
+        ▼
+CameraController (CameraX)
+        │
+        ▼
+Physical Camera Hardware
+┌──────────┬──────────┬──────────┐
+│UltraWide │   Wide   │   Tele   │
+│  0.5x    │   1x     │  2x/3x   │
+└──────────┴──────────┴──────────┘
+```
+
+### 倍率 → 镜头映射规则
+
+| UI 倍率 | 目标镜头 | Fallback |
+|---------|----------|----------|
+| ≤ 0.6x | ULTRA_WIDE | WIDE + 数字缩放 |
+| 0.6x ~ 1.8x | WIDE | - |
+| ≥ 1.8x | TELE | WIDE + 数字变焦 |
+
+### JS Bridge 接口
+
+```javascript
+// Web 调用方式
+window.AndroidCamera.setZoom(0.5)    // 设置倍率
+window.AndroidCamera.capture()       // 拍照
+window.AndroidCamera.stop()          // 停止相机
+window.AndroidCamera.getCapabilities() // 获取设备能力
+```
+
+### Native 回调
+
+```javascript
+// 相机就绪
+window.onNativeCameraReady = (capabilities) => { ... }
+
+// 倍率变化
+window.onNativeZoomChanged = (zoom, lensType) => { ... }
+
+// 拍照完成
+window.onNativeCapture = (base64) => { ... }
+
+// 错误处理
+window.onNativeError = (message) => { ... }
+```
+
+### 设备兼容性
+
+| 设备类型 | 可用倍率 |
+|----------|----------|
+| 单摄 | 1x |
+| 双摄 (广角+主摄) | 0.5x, 1x |
+| 双摄 (主摄+长焦) | 1x, 2x |
+| 三摄 | 0.5x, 1x, 2x/3x |
+
+### 详细文档
+
+完整架构设计和代码实现见：
+- `android/NATIVE_CAMERA_ARCHITECTURE.md`
